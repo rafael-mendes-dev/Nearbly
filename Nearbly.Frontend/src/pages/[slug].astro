@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import PublicStore from '../components/public/PublicStore.tsx'
+import type { PublicStoreResponse } from '../lib/api/types'
+
+const apiBase = (import.meta.env.API_BASE_URL ?? import.meta.env.PUBLIC_API_BASE_URL ?? 'http://localhost:5112').replace(/\/$/, '')
+const sourceParam = Astro.url.searchParams.get('src')?.trim().toLowerCase()
+const source = sourceParam === 'nfc' ? 'nfc' : sourceParam === 'qr' || sourceParam === 'qrcode' || sourceParam === 'qr_code' ? 'qr_code' : sourceParam === 'unknown' ? 'unknown' : 'direct'
+const slug = Astro.params.slug ?? ''
+let store: PublicStoreResponse | null = null
+let status = 200
+
+try {
+  const response = await fetch(`${apiBase}/api/public/stores/${encodeURIComponent(slug)}`)
+  if (response.ok) store = await response.json() as PublicStoreResponse
+  else status = response.status === 404 ? 404 : 503
+} catch {
+  status = 503
+}
+
+Astro.response.status = status
+const title = store ? `${store.name} | Nearbly` : status === 404 ? 'Página não encontrada | Nearbly' : 'Página indisponível | Nearbly'
+const description = store?.description ?? 'A página pública deste negócio está temporariamente indisponível.'
+const themeColor = /^#[0-9a-f]{6}$/i.test(store?.primaryColor ?? '') ? store?.primaryColor ?? '#06080F' : '#06080F'
+---
+<BaseLayout title={title} description={description} canonical={`/${slug}`} themeColor={themeColor}>
+  {store ? <PublicStore store={store} source={source} client:load /> : <main class="public-error"><div><span class="eyebrow">{status === 404 ? '404 / endereço não encontrado' : '503 / indisponível agora'}</span><h1>{status === 404 ? 'Este endereço não existe.' : 'A página volta em instantes.'}</h1><p>{status === 404 ? 'Confira o endereço ou peça um novo QR Code ao estabelecimento.' : 'Não conseguimos acessar os dados do estabelecimento neste momento.'}</p><a class="button button-dark" href="/">Ir para Nearbly</a></div></main>}
+</BaseLayout>

@@ -1,0 +1,46 @@
+---
+import '../styles/global.css'
+
+interface Props {
+  title: string
+  description: string
+  canonical: string
+  noindex?: boolean
+  schema?: Record<string, unknown>
+  barba?: boolean
+  themeColor?: string
+}
+
+const { title, description, canonical, noindex = false, schema, barba = false, themeColor = '#06080F' } = Astro.props
+const siteUrl = import.meta.env.SITE_URL ?? 'https://nearbly.com.br'
+---
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="theme-color" content={themeColor} />
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
+    <link rel="canonical" href={`${siteUrl}${canonical}`} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={`${siteUrl}${canonical}`} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/brand/logo-mark-white.svg" />
+    <title>{title}</title>
+    {schema && <script is:inline type="application/ld+json" set:html={JSON.stringify(schema)} />}
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+    <div data-barba={barba ? 'wrapper' : undefined}>
+      <div data-barba={barba ? 'container' : undefined} data-barba-namespace={barba ? 'marketing' : undefined}>
+        <slot />
+      </div>
+    </div>
+  </body>
+</html>

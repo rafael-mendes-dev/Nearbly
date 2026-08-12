@@ -1,97 +1,38 @@
 # Nearbly Frontend
 
-Frontend React + TypeScript + Vite do monorepo Nearbly. A API consumida pelo frontend está documentada em [`../docs/API.md`](../docs/API.md).
+Frontend híbrido em Astro + React para as páginas institucionais, páginas públicas de lojas e painel administrativo da Nearbly.
 
 ## Desenvolvimento
 
-Na raiz do monorepo, a API deve estar disponível em `http://localhost:5112`. Em seguida:
+Configure as variáveis de [`.env.example`](./.env.example) e mantenha a API disponível em `http://localhost:5112`.
+O frontend usa Astro 7 e requer Node.js `>=22.12.0`.
 
 ```bash
+cp .env.example .env
 yarn install --frozen-lockfile
 yarn dev
 ```
 
-O servidor Vite fica disponível em `http://localhost:5173`.
+O Astro fica disponível em `http://localhost:4321`. Em produção, o runtime Node deve encaminhar `/api/**` e `/r/**` para o backend antes das demais rotas para o Astro.
+
+## Rotas
+
+- `/`, `/solucoes` e `/como-funciona`: páginas institucionais prerenderizadas.
+- `/:slug`: página pública SSR da loja.
+- `/admin/login` e `/admin/lojas/**`: painel React com autenticação em memória e `sessionStorage`.
 
 ## Scripts
 
-- `yarn dev`: inicia o servidor de desenvolvimento com HMR.
-- `yarn build`: executa o type-check e gera a build de produção.
-- `yarn lint`: executa o ESLint.
-- `yarn preview`: serve a build localmente.
+- `yarn dev`: servidor Astro em desenvolvimento.
+- `yarn build`: valida tipos e gera o servidor Astro.
+- `yarn lint`: ESLint.
+- `yarn test`: testes unitários Vitest.
+- `yarn e2e`: testes Playwright, quando houver servidor e API configurados.
 
-## Referência do template
+## Decisões
 
-As seções abaixo documentam a configuração base do Vite e do ESLint usada pela aplicação.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
-```
+- Dados da loja pública são buscados no servidor; a ilha React cuida apenas de abas e registro de visualização.
+- O cliente HTTP centraliza Problem Details, autenticação Bearer e a origem da API.
+- O JWT não é enviado a logs e expira conforme `expiresAtUtc`.
+- Reordenação usa DnD Kit e refaz a consulta se alguma atualização parcial falhar.
+- As transições Barba ficam restritas ao namespace institucional e respeitam `prefers-reduced-motion`.

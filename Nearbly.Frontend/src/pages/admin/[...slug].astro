@@ -1,0 +1,10 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import AdminApp from '../../components/admin/AdminApp.tsx'
+
+const section = Astro.params.slug?.split('/').pop() ?? 'login'
+const title = section === 'login' ? 'Entrar | Nearbly' : 'Painel administrativo | Nearbly'
+---
+<BaseLayout title={title} description="Área administrativa Nearbly." canonical={Astro.url.pathname} noindex>
+  <AdminApp client:only="react" />
+</BaseLayout>

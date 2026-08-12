@@ -1,0 +1,20 @@
+# Nearbly
+
+Nearbly transforma um identificador NFC ou QR Code em uma página pública de uma loja.
+
+## Público
+
+Pequenos negócios de Curitiba que precisam organizar links, facilitar acessos e acompanhar cliques sem expor URLs externas.
+
+## Páginas oficiais
+
+- https://nearbly.com.br/
+- https://nearbly.com.br/solucoes
+- https://nearbly.com.br/como-funciona
+
+## Capacidades
+
+- Página pública por loja com logo, descrição, abas e links.
+- Redirect rastreado para registrar cliques.
+- Painel administrativo com lojas, abas, links e analytics agregados.
+- Origem de tráfego: NFC, QR Code, direto e desconhecida.

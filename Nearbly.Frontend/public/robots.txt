@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /r/
+
+Sitemap: https://nearbly.com.br/sitemap.xml

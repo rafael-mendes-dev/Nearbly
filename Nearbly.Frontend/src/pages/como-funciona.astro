@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import MarketingHeader from '../components/marketing/MarketingHeader.astro'
+import MarketingFooter from '../components/marketing/MarketingFooter.astro'
+import BarbaTransitions from '../components/marketing/BarbaTransitions.tsx'
+import { Stepper } from '../components/react-bits/Stepper'
+import { CountUp } from '../components/react-bits/CountUp'
+import { AnimatedContent } from '../components/react-bits/AnimatedContent'
+import { ScrollFloat } from '../components/react-bits/ScrollFloat'
+import { ScrollVelocity } from '../components/react-bits/ScrollVelocity'
+import { SpotlightCard } from '../components/react-bits/SpotlightCard'
+
+export const prerender = true
+---
+<BaseLayout title="Como funciona a Nearbly" description="Entenda o fluxo Nearbly: display, aproximação ou leitura, página pública, clique e métricas." canonical="/como-funciona" barba>
+  <MarketingHeader />
+  <main id="conteudo">
+    <section class="hero"><div class="container hero-content"><AnimatedContent client:load><span class="eyebrow">Cinco passos claros</span><h1>Do olhar ao próximo passo.</h1><p class="hero-copy">Uma experiência curta para quem visita. Uma leitura útil para quem administra.</p></AnimatedContent><AnimatedContent client:load direction="horizontal" reverse><div class="product-stage reference-stage"><div class="stage-grid" aria-hidden="true"></div><img class="display-reference" src="/brand/nearbly-display-reference.webp" alt="Display Nearbly com acesso por NFC e QR Code" width="900" height="1350" loading="eager" /></div></AnimatedContent></div></section>
+    <ScrollVelocity client:visible texts={['DISPLAY · NFC · QR CODE · PÁGINA · CLIQUE · MÉTRICA ·', 'DO ESPAÇO FÍSICO AO PRÓXIMO PASSO ·']} />
+    <section class="page-section fullscreen-section"><div class="container"><div class="section-heading"><span class="eyebrow">O fluxo Nearbly</span><ScrollFloat client:visible text="Uma ponte entre o mundo real e o digital." /><p>O visitante não precisa aprender uma nova ferramenta. Ele apenas segue o caminho que você deixou pronto.</p></div><Stepper client:visible><div class="flow"><div class="flow-step"><span class="flow-index">01</span><strong>Display</strong><p>O acesso fica visível no seu ambiente, no ponto em que a decisão acontece.</p></div><div class="flow-step"><span class="flow-index">02</span><strong>Leitura</strong><p>A pessoa aproxima o celular do NFC ou aponta a câmera para o QR Code.</p></div><div class="flow-step"><span class="flow-index">03</span><strong>Página</strong><p>A página pública abre com a identidade, abas e links ativos do negócio.</p></div><div class="flow-step"><span class="flow-index">04</span><strong>Clique</strong><p>O link certo é acessado por um redirect rastreado, sem expor a URL na página.</p></div><div class="flow-step"><span class="flow-index">05</span><strong>Métrica</strong><p>Os dados agregados mostram acessos, cliques, origens e o que merece destaque.</p></div></div></Stepper></div></section>
+    <section class="page-section soft fullscreen-section"><div class="container feature-grid"><SpotlightCard client:visible className="feature-item"><span class="feature-number"><CountUp client:visible value={1} /> / página</span><h3>Uma entrada única</h3><p>O cliente encontra o essencial sem navegar por uma lista de destinos.</p></SpotlightCard><SpotlightCard client:visible className="feature-item"><span class="feature-number"><CountUp client:visible value={4} suffix=" origens" /></span><h3>Contexto de acesso</h3><p>NFC, QR Code, acesso direto e desconhecido aparecem separados no analytics.</p></SpotlightCard><SpotlightCard client:visible className="feature-item"><span class="feature-number">100% / foco</span><h3>Menos ruído</h3><p>Sem métricas decorativas. Apenas sinais que ajudam a próxima escolha.</p></SpotlightCard></div></section>
+  </main>
+  <MarketingFooter /><BarbaTransitions client:load />
+</BaseLayout>

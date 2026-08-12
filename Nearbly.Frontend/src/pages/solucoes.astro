@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import MarketingHeader from '../components/marketing/MarketingHeader.astro'
+import MarketingFooter from '../components/marketing/MarketingFooter.astro'
+import BarbaTransitions from '../components/marketing/BarbaTransitions.tsx'
+import ParallaxMedia from '../components/marketing/ParallaxMedia'
+import { AnimatedContent } from '../components/react-bits/AnimatedContent'
+import { ScrollFloat } from '../components/react-bits/ScrollFloat'
+import { ScrollStack } from '../components/react-bits/ScrollStack'
+import { ScrollVelocity } from '../components/react-bits/ScrollVelocity'
+
+export const prerender = true
+const solutionItems = [
+  { index: '01 / 04', label: 'Aproximação', title: 'NFC.', description: 'Uma aproximação leva ao endereço digital do negócio sem depender de busca, digitação ou instalação.', detail: 'Toque · acesso instantâneo' },
+  { index: '02 / 04', label: 'Leitura', title: 'QR Code.', description: 'Um código visível no display, na embalagem ou na mesa facilita o acesso com qualquer câmera.', detail: 'Escaneie · acesse' },
+  { index: '03 / 04', label: 'Experiência', title: 'Página digital.', description: 'Logo, descrição, abas e links relevantes aparecem em uma página rápida e alinhada à identidade do negócio.', detail: 'Marca · conteúdo · ação' },
+  { index: '04 / 04', label: 'Decisão', title: 'Analytics.', description: 'Visualizações, cliques e origens transformam cada interação em um sinal útil para as próximas escolhas.', detail: 'Dados agregados · clareza' },
+]
+---
+<BaseLayout title="Soluções Nearbly | NFC, QR Code e analytics" description="Conheça as soluções Nearbly para páginas digitais, links rastreados e analytics para negócios de Curitiba." canonical="/solucoes" barba>
+  <MarketingHeader />
+  <main id="conteudo">
+    <section class="hero product-hero"><div class="container hero-content"><AnimatedContent client:load><span class="eyebrow">Soluções para o dia a dia</span><h1 class="hero-title-long">Presença digital que começa no seu espaço.</h1><p class="hero-copy">Do balcão à bio, a Nearbly concentra o que o seu cliente precisa em uma experiência clara.</p><div class="hero-actions"><a class="button button-primary" href="https://wa.me/5541985306266?text=Ol%C3%A1%21%20Quero%20conhecer%20a%20Nearbly%20para%20meu%20neg%C3%B3cio%20em%20Curitiba." target="_blank" rel="noreferrer">Conversar sobre o meu negócio</a></div></AnimatedContent><AnimatedContent client:load direction="horizontal" reverse><div class="product-stage reference-stage"><div class="stage-grid" aria-hidden="true"></div><img class="display-product-image" src="/brand/display-product-1100.webp" srcset="/brand/display-product-640.webp 640w, /brand/display-product-1100.webp 1100w" sizes="(max-width: 850px) 80vw, 470px" alt="Display de mesa Nearbly com acesso por NFC e área reservada para QR Code" width="1100" height="1374" loading="eager" fetchpriority="high" /></div></AnimatedContent></div></section>
+    <ScrollVelocity client:visible texts={['NFC · QR CODE · PÁGINA DIGITAL · ANALYTICS ·', 'APROXIME · ESCANEIE · ACESSE · ENTENDA ·']} />
+    <section class="page-section stack-story"><div class="container stack-story-intro"><div class="section-heading"><span class="eyebrow">O que entra</span><ScrollFloat client:visible text="Uma base simples para crescer com clareza." /><p>Feita para quem precisa de uma solução prática, com informação suficiente para agir sem virar um painel complicado.</p></div></div><ScrollStack client:visible className="container" items={solutionItems} /></section>
+    <section class="page-section soft fullscreen-section location-section"><ParallaxMedia client:visible className="location-media" src="/brand/curitiba-local-business-1600.webp" srcSet="/brand/curitiba-local-business-960.webp 960w, /brand/curitiba-local-business-1600.webp 1600w, /brand/curitiba-local-business-2400.webp 2400w" alt="Cliente usando um display Nearbly em um negócio local de Curitiba" /><div class="container location-content"><div class="section-heading"><span class="eyebrow">Para Curitiba</span><ScrollFloat client:visible text="Feita para quem conhece o valor de uma boa indicação." /><p>O comércio local vive de encontros. A Nearbly ajuda cada encontro a continuar online.</p></div></div></section>
+  </main>
+  <MarketingFooter /><BarbaTransitions client:load />
+</BaseLayout>

@@ -1,0 +1,28 @@
+---
+const currentPath = Astro.url.pathname
+---
+<header class="marketing-header">
+  <div class="container marketing-nav">
+    <a class="brand" href="/" aria-label="Nearbly, início">
+      <img class="brand-mark" src="/brand/logo-mark-white.svg" alt="" />
+      <span>Nearbly</span>
+    </a>
+    <nav class="marketing-links" aria-label="Principal">
+      <a href="/solucoes">Soluções</a>
+      <a href="/como-funciona">Como funciona</a>
+      <a class="button button-primary" href="https://wa.me/5541985306266?text=Ol%C3%A1%21%20Quero%20conhecer%20a%20Nearbly%20para%20meu%20neg%C3%B3cio%20em%20Curitiba." target="_blank" rel="noreferrer">Falar com a Nearbly</a>
+    </nav>
+    <details class="mobile-menu">
+      <summary class="marketing-menu" aria-label="Abrir menu de navegação"><span aria-hidden="true"></span></summary>
+      <div class="mobile-menu-panel">
+        <nav aria-label="Navegação mobile">
+          <a href="/" aria-current={currentPath === '/' ? 'page' : undefined}><span>Início</span><small>01</small></a>
+          <a href="/solucoes" aria-current={currentPath === '/solucoes' ? 'page' : undefined}><span>Soluções</span><small>02</small></a>
+          <a href="/como-funciona" aria-current={currentPath === '/como-funciona' ? 'page' : undefined}><span>Como funciona</span><small>03</small></a>
+        </nav>
+        <a class="button button-primary" href="https://wa.me/5541985306266?text=Ol%C3%A1%21%20Quero%20conhecer%20a%20Nearbly%20para%20meu%20neg%C3%B3cio%20em%20Curitiba." target="_blank" rel="noreferrer">Falar com a Nearbly</a>
+        <a class="mobile-admin-link" href="/admin/login">Área administrativa</a>
+      </div>
+    </details>
+  </div>
+</header>
