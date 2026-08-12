@@ -131,6 +131,7 @@
 .content-tabs-heading strong { color: var(--cyan); }
 .content-tabs > button { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 9px; border: 0; border-left: 2px solid transparent; border-radius: 3px; color: var(--ink); background: transparent; text-align: left; cursor: pointer; }
 .content-tabs > button:hover, .content-tabs > button.is-active { border-left-color: var(--cyan); background: var(--primary-soft); }
+.content-tabs > button.is-inactive, .content-item-row.is-inactive { opacity: .63; }
 .content-tabs > button > span:first-child { min-width: 0; display: grid; gap: 5px; }
 .content-tabs > button strong { overflow: hidden; font-size: .82rem; text-overflow: ellipsis; white-space: nowrap; }
 .content-tabs > button small { color: #71809b; font: 600 .62rem var(--mono); }
