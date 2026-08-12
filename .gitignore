@@ -3,6 +3,11 @@ obj/
 .vs/
 .idea/
 .env
+.DS_Store
+Nearbly.Frontend/node_modules/
+Nearbly.Frontend/dist/
+Nearbly.Frontend/.env*
+!Nearbly.Frontend/.env.example
 *.user
 *.suo
 TestResults/
