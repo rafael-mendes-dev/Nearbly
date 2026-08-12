@@ -24,7 +24,7 @@ Em produção, a URL depende do ambiente de hospedagem. A API não possui versio
 - IDs: UUID.
 - Datas com horário: ISO 8601 UTC, por exemplo "2026-08-12T12:30:00Z".
 - Datas sem horário: yyyy-MM-dd.
-- Não existem valores monetários neste contrato.
+- Valores monetários usam BRL e são informativos; produtos não possuem checkout.
 
 ### Segurança
 
@@ -136,6 +136,7 @@ Não há refresh token. Remova o token quando expirar ou no logout.
   "slug": "cafe-central",
   "description": "Café no centro",
   "logoUrl": "https://cdn.example.com/logo.png",
+  "logoMediaId": null,
   "primaryColor": "#112233",
   "secondaryColor": null,
   "isActive": true,
@@ -150,7 +151,8 @@ Não há refresh token. Remova o token quando expirar ou no logout.
 | name | string | não | Até 160 caracteres. |
 | slug | string | não | Normalizado, único globalmente, até 120 caracteres. |
 | description | string | sim | Até 500 caracteres. |
-| logoUrl | string | sim | URL HTTP/HTTPS sem credenciais. |
+| logoUrl | string | sim | URL HTTP/HTTPS sem credenciais ou caminho interno `/media/{mediaId}` quando logoMediaId estiver preenchido. |
+| logoMediaId | uuid | sim | Mídia otimizada da loja; quando preenchido, tem prioridade sobre logoUrl. |
 | primaryColor | string | sim | #RRGGBB. |
 | secondaryColor | string | sim | #RRGGBB. |
 | isActive | boolean | não | Estado lógico. |
@@ -181,6 +183,7 @@ isActive só existe no update e é opcional. Se omitido, o estado atual é prese
   "storeId": "9b7d6d9d-7d20-4c2e-ae60-7c3f4b9af100",
   "key": "menu",
   "name": "Menu",
+  "contentType": "links",
   "sortOrder": 0,
   "isActive": true,
   "createdAtUtc": "2026-08-12T12:00:00Z",
@@ -194,6 +197,7 @@ isActive só existe no update e é opcional. Se omitido, o estado atual é prese
 | storeId | uuid | Loja proprietária. |
 | key | string | Obrigatório, minúsculo, até 80 caracteres, único na loja. |
 | name | string | Obrigatório, até 120 caracteres. |
+| contentType | string | `links`, `products`, `markdown` ou `gallery`; ausente na entrada significa `links`. Só pode mudar enquanto a aba nunca teve conteúdo, inclusive inativo. |
 | sortOrder | integer | Maior ou igual a zero. |
 | isActive | boolean | Estado lógico. |
 | createdAtUtc / updatedAtUtc | datetime | UTC. |
@@ -209,6 +213,8 @@ CreateTabRequest:
 ~~~
 
 UpdateTabRequest possui os mesmos campos e aceita também isActive.
+
+`UpdateStoreRequest` aceita também `logoMediaId` para selecionar uma mídia já enviada à mesma loja.
 
 ### LinkResponse
 
@@ -556,6 +562,7 @@ export interface StoreResponse {
   slug: string;
   description: string | null;
   logoUrl: string | null;
+  logoMediaId: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
   isActive: boolean;
@@ -568,6 +575,7 @@ export interface TabResponse {
   storeId: string;
   key: string;
   name: string;
+  contentType: 'links' | 'products' | 'markdown' | 'gallery';
   sortOrder: number;
   isActive: boolean;
   createdAtUtc: string;
@@ -600,9 +608,17 @@ export interface PublicTabResponse {
   id: string;
   key: string;
   name: string;
+  contentType: 'links' | 'products' | 'markdown' | 'gallery';
   sortOrder: number;
   links: PublicLinkResponse[];
+  products: PublicProductResponse[];
+  markdownBlocks: PublicMarkdownBlockResponse[];
+  galleryItems: PublicGalleryItemResponse[];
 }
+
+export interface PublicProductResponse { id: string; name: string; description: string | null; imageUrl: string; price: number | null; isAvailable: boolean; sortOrder: number; }
+export interface PublicMarkdownBlockResponse { id: string; title: string | null; markdown: string; sortOrder: number; }
+export interface PublicGalleryItemResponse { id: string; imageUrl: string; altText: string; caption: string | null; sortOrder: number; }
 
 export interface PublicStoreResponse {
   id: string;
@@ -646,6 +662,11 @@ O arquivo .env local não é versionado:
 | BootstrapAdmin__DisplayName | não | Configuração reservada para identificação futura. |
 | Cors__AllowedOrigins__0 | não | Origem do frontend, por exemplo http://localhost:5173. |
 | Swagger__Enabled | não | Necessário somente fora de Development. |
+| Media__Provider | não | `filesystem` (padrão) ou `s3`. |
+| Media__RootPath | não | Diretório do storage local. No Compose, use `/var/lib/nearbly/media`. |
+| Media__S3__Endpoint | quando S3 | Endpoint S3 compatível. |
+| Media__S3__Bucket | quando S3 | Bucket privado. |
+| Media__S3__AccessKey / Media__S3__SecretKey | quando S3 | Credenciais do storage; nunca versionar. |
 
 Comandos:
 
@@ -668,6 +689,80 @@ dotnet run --project Nearbly.Backend/src/Nearbly.Api
 - Mudanças persistidas devem incluir migration e testes de integração.
 - Mudanças em status, erros, enums ou campos devem atualizar este arquivo, Swagger e testes.
 
-## 12. Fora do MVP
+## 12. Conteúdo variado e mídia
 
-Não fazem parte do contrato atual: refresh token, paginação administrativa, gerenciamento de administradores, roles, cache, upload de mídia, filas, webhooks e analytics por IP/User-Agent.
+### Tipos de aba
+
+`TabResponse.contentType` é sempre retornado como `links`, `products`, `markdown` ou `gallery`. Clientes antigos podem omitir o campo ao criar ou atualizar uma aba; nesse caso a API mantém ou assume `links`. Uma aba só pode trocar de tipo quando não possui nenhum conteúdo associado, mesmo que esteja desativado.
+
+Links associados a uma aba precisam apontar para uma aba `links`. A API valida a loja da rota, a loja da aba e a loja da mídia antes de criar qualquer conteúdo.
+
+### Upload de mídia
+
+`POST /api/admin/stores/{storeId}/media` exige JWT e `multipart/form-data` com o campo `file`. JPEG, PNG e WebP são aceitos até 5 MB. A API valida a assinatura real do arquivo, remove metadados, limita a maior dimensão a 1600 px e armazena uma versão WebP otimizada.
+
+Resposta `201 MediaResponse`:
+
+~~~json
+{
+  "id": "f1c8b6d0-4c13-4fd4-86f1-0f05cb700001",
+  "url": "/media/f1c8b6d0-4c13-4fd4-86f1-0f05cb700001",
+  "mimeType": "image/webp",
+  "sizeBytes": 28412,
+  "width": 1200,
+  "height": 800,
+  "isActive": true,
+  "createdAtUtc": "2026-08-12T12:00:00Z"
+}
+~~~
+
+`GET /media/{mediaId}` é anônimo, não expõe a chave privada do storage e retorna cache público. `DELETE /api/admin/stores/{storeId}/media/{mediaId}` só desativa mídia sem referência. Mídias usadas por logo, produto ou galeria retornam `409`.
+
+Para usar a mídia como logo, envie `logoMediaId` em `PUT /api/admin/stores/{storeId}`. `logoUrl` continua aceitando URLs externas para compatibilidade; a mídia interna tem prioridade.
+
+### CRUD de conteúdo
+
+Todos os endpoints abaixo exigem JWT, usam desativação lógica e retornam ativos e inativos nas listagens administrativas:
+
+| Método | Rota | Corpo de criação |
+|---|---|---|
+| GET/POST | `/api/admin/stores/{storeId}/tabs/{tabId}/products` | `name`, `description`, `mediaAssetId`, `price`, `isAvailable`, `sortOrder` |
+| GET/PUT/DELETE | `/api/admin/stores/{storeId}/tabs/{tabId}/products/{id}` | mesmos campos; update aceita `isActive` |
+| GET/POST | `/api/admin/stores/{storeId}/tabs/{tabId}/markdown-blocks` | `title`, `markdown`, `sortOrder` |
+| GET/PUT/DELETE | `/api/admin/stores/{storeId}/tabs/{tabId}/markdown-blocks/{id}` | mesmos campos; update aceita `isActive` |
+| GET/POST | `/api/admin/stores/{storeId}/tabs/{tabId}/gallery-items` | `mediaAssetId`, `altText`, `caption`, `sortOrder` |
+| GET/PUT/DELETE | `/api/admin/stores/{storeId}/tabs/{tabId}/gallery-items/{id}` | mesmos campos; update aceita `isActive` |
+
+Produtos exigem imagem e aceitam preço BRL opcional maior ou igual a zero. `altText` é obrigatório para itens de galeria. `sortOrder` nunca pode ser negativo. Conteúdo criado no endpoint de tipo diferente da aba retorna `409`.
+
+### Resposta pública
+
+Cada `PublicTabResponse` contém sempre as quatro coleções, com as não aplicáveis vazias:
+
+~~~json
+{
+  "id": "d1c95cc2-d5fb-41aa-97e0-4d4e1d6bb001",
+  "key": "cardapio",
+  "name": "Cardápio",
+  "contentType": "products",
+  "sortOrder": 0,
+  "links": [],
+  "products": [{
+    "id": "bf8e3504-249b-4e4d-a6bd-3b01b89c2002",
+    "name": "Café coado",
+    "description": "250 ml",
+    "imageUrl": "/media/f1c8b6d0-4c13-4fd4-86f1-0f05cb700001",
+    "price": 8.5,
+    "isAvailable": true,
+    "sortOrder": 0
+  }],
+  "markdownBlocks": [],
+  "galleryItems": []
+}
+~~~
+
+As abas públicas ativas são ordenadas por `sortOrder` e `id`; itens de cada coleção seguem a mesma regra. Produtos e galeria não geram cliques ou redirects. Markdown é retornado como texto e deve ser renderizado com sanitização no cliente; HTML arbitrário não faz parte do contrato. `PublicStoreResponse.links` continua presente para links legados sem aba.
+
+## 13. Fora do MVP
+
+Não fazem parte do contrato atual: refresh token, paginação administrativa, gerenciamento de administradores, roles, filas, webhooks e analytics por IP/User-Agent.
