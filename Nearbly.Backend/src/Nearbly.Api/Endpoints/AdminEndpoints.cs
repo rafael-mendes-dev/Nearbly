@@ -1,5 +1,8 @@
 using Nearbly.Application.Features.Analytics;
+using Nearbly.Application.Common;
+using Nearbly.Application.Features.Content;
 using Nearbly.Application.Features.Links;
+using Nearbly.Application.Features.Media;
 using Nearbly.Application.Features.Stores;
 using Nearbly.Application.Features.Tabs;
 
@@ -45,6 +48,34 @@ public static class AdminEndpoints
 
         var analytics = endpoints.MapGet("/api/admin/stores/{storeId:guid}/analytics", async (Guid storeId, DateOnly? from, DateOnly? to, IAnalyticsService service, CancellationToken ct) => Results.Ok(await service.GetAsync(storeId, from, to, ct))).RequireAuthorization().WithTags("Admin - Analytics");
         analytics.WithSummary("Get store analytics").Produces<StoreAnalyticsResponse>().ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status401Unauthorized).ProducesProblem(StatusCodes.Status404NotFound);
+
+        var media = endpoints.MapGroup("/api/admin/stores/{storeId:guid}/media").RequireAuthorization().WithTags("Admin - Media");
+        media.MapPost("", async (Guid storeId, IFormFile file, IMediaService service, CancellationToken ct) =>
+        {
+            await using var stream = file.OpenReadStream();
+            var response = await service.UploadAsync(storeId, new MediaUpload(stream, file.FileName, file.ContentType, file.Length), ct);
+            return Results.Created($"/media/{response.Id}", response);
+        }).DisableAntiforgery().WithSummary("Upload store media").Produces<MediaResponse>(StatusCodes.Status201Created).ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status401Unauthorized).ProducesProblem(StatusCodes.Status404NotFound);
+        media.MapDelete("/{mediaId:guid}", async (Guid storeId, Guid mediaId, IMediaService service, CancellationToken ct) => { await service.DeactivateAsync(storeId, mediaId, ct); return Results.NoContent(); }).WithSummary("Deactivate unused media").Produces(StatusCodes.Status204NoContent).ProducesProblem(StatusCodes.Status401Unauthorized).ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
+
+        var content = endpoints.MapGroup("/api/admin/stores/{storeId:guid}/tabs/{tabId:guid}").RequireAuthorization().WithTags("Admin - Content");
+        content.MapGet("/products", (Guid storeId, Guid tabId, IContentService service, CancellationToken ct) => service.ListProductsAsync(storeId, tabId, ct)).Produces<IReadOnlyList<ProductResponse>>();
+        content.MapGet("/products/{id:guid}", (Guid storeId, Guid tabId, Guid id, IContentService service, CancellationToken ct) => service.GetProductAsync(storeId, tabId, id, ct)).Produces<ProductResponse>();
+        content.MapPost("/products", async (Guid storeId, Guid tabId, CreateProductRequest request, IContentService service, CancellationToken ct) => Results.Created($"/api/admin/stores/{storeId}/tabs/{tabId}/products", await service.CreateProductAsync(storeId, tabId, request, ct))).Produces<ProductResponse>(StatusCodes.Status201Created);
+        content.MapPut("/products/{id:guid}", async (Guid storeId, Guid tabId, Guid id, UpdateProductRequest request, IContentService service, CancellationToken ct) => Results.Ok(await service.UpdateProductAsync(storeId, tabId, id, request, ct))).Produces<ProductResponse>();
+        content.MapDelete("/products/{id:guid}", async (Guid storeId, Guid tabId, Guid id, IContentService service, CancellationToken ct) => { await service.DeactivateProductAsync(storeId, tabId, id, ct); return Results.NoContent(); });
+
+        content.MapGet("/markdown-blocks", (Guid storeId, Guid tabId, IContentService service, CancellationToken ct) => service.ListMarkdownBlocksAsync(storeId, tabId, ct)).Produces<IReadOnlyList<MarkdownBlockResponse>>();
+        content.MapGet("/markdown-blocks/{id:guid}", (Guid storeId, Guid tabId, Guid id, IContentService service, CancellationToken ct) => service.GetMarkdownBlockAsync(storeId, tabId, id, ct)).Produces<MarkdownBlockResponse>();
+        content.MapPost("/markdown-blocks", async (Guid storeId, Guid tabId, CreateMarkdownBlockRequest request, IContentService service, CancellationToken ct) => Results.Created($"/api/admin/stores/{storeId}/tabs/{tabId}/markdown-blocks", await service.CreateMarkdownBlockAsync(storeId, tabId, request, ct))).Produces<MarkdownBlockResponse>(StatusCodes.Status201Created);
+        content.MapPut("/markdown-blocks/{id:guid}", async (Guid storeId, Guid tabId, Guid id, UpdateMarkdownBlockRequest request, IContentService service, CancellationToken ct) => Results.Ok(await service.UpdateMarkdownBlockAsync(storeId, tabId, id, request, ct))).Produces<MarkdownBlockResponse>();
+        content.MapDelete("/markdown-blocks/{id:guid}", async (Guid storeId, Guid tabId, Guid id, IContentService service, CancellationToken ct) => { await service.DeactivateMarkdownBlockAsync(storeId, tabId, id, ct); return Results.NoContent(); });
+
+        content.MapGet("/gallery-items", (Guid storeId, Guid tabId, IContentService service, CancellationToken ct) => service.ListGalleryItemsAsync(storeId, tabId, ct)).Produces<IReadOnlyList<GalleryItemResponse>>();
+        content.MapGet("/gallery-items/{id:guid}", (Guid storeId, Guid tabId, Guid id, IContentService service, CancellationToken ct) => service.GetGalleryItemAsync(storeId, tabId, id, ct)).Produces<GalleryItemResponse>();
+        content.MapPost("/gallery-items", async (Guid storeId, Guid tabId, CreateGalleryItemRequest request, IContentService service, CancellationToken ct) => Results.Created($"/api/admin/stores/{storeId}/tabs/{tabId}/gallery-items", await service.CreateGalleryItemAsync(storeId, tabId, request, ct))).Produces<GalleryItemResponse>(StatusCodes.Status201Created);
+        content.MapPut("/gallery-items/{id:guid}", async (Guid storeId, Guid tabId, Guid id, UpdateGalleryItemRequest request, IContentService service, CancellationToken ct) => Results.Ok(await service.UpdateGalleryItemAsync(storeId, tabId, id, request, ct))).Produces<GalleryItemResponse>();
+        content.MapDelete("/gallery-items/{id:guid}", async (Guid storeId, Guid tabId, Guid id, IContentService service, CancellationToken ct) => { await service.DeactivateGalleryItemAsync(storeId, tabId, id, ct); return Results.NoContent(); });
         return endpoints;
     }
 }

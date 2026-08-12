@@ -58,8 +58,12 @@ public sealed class LinkService(INearblyDbContext db, IValidator<CreateLinkReque
 
     private async Task EnsureTabAsync(Guid storeId, Guid? tabId, CancellationToken cancellationToken)
     {
-        if (tabId.HasValue && !await db.StoreTabs.AnyAsync(x => x.StoreId == storeId && x.Id == tabId.Value, cancellationToken))
-            throw new ConflictException("The selected tab does not belong to this store.");
+        if (tabId.HasValue)
+        {
+            var tab = await db.StoreTabs.SingleOrDefaultAsync(x => x.StoreId == storeId && x.Id == tabId.Value, cancellationToken)
+                ?? throw new ConflictException("The selected tab does not belong to this store.");
+            if (tab.ContentType != ContentType.Links) throw new ConflictException("Links can only be added to a links tab.");
+        }
     }
 
     private async Task SaveAsync(CancellationToken cancellationToken)

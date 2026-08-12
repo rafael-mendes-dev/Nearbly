@@ -16,5 +16,40 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build:
+      context: ./Nearbly.Backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-nearbly};Username=${POSTGRES_USER:-nearbly};Password=${POSTGRES_PASSWORD:-nearbly}
+      Jwt__Issuer: ${Jwt__Issuer:-Nearbly}
+      Jwt__Audience: ${Jwt__Audience:-Nearbly.Admin}
+      Jwt__SigningKey: ${Jwt__SigningKey:-replace-with-at-least-32-characters-development-key}
+      Jwt__ExpirationMinutes: ${Jwt__ExpirationMinutes:-60}
+      BootstrapAdmin__Email: ${BootstrapAdmin__Email:-admin@example.com}
+      BootstrapAdmin__Password: ${BootstrapAdmin__Password:-change-this-password}
+      BootstrapAdmin__DisplayName: ${BootstrapAdmin__DisplayName:-Nearbly Admin}
+      Media__Provider: ${Media__Provider:-filesystem}
+      Media__RootPath: /var/lib/nearbly/media
+      Media__S3__Endpoint: ${Media__S3__Endpoint:-}
+      Media__S3__Bucket: ${Media__S3__Bucket:-}
+      Media__S3__AccessKey: ${Media__S3__AccessKey:-}
+      Media__S3__SecretKey: ${Media__S3__SecretKey:-}
+      Cors__AllowedOrigins__0: http://127.0.0.1:55040
+      Cors__AllowedOrigins__1: http://localhost:55040
+      Cors__AllowedOrigins__2: http://localhost:5173
+      Swagger__Enabled: "true"
+    ports:
+      - "5112:8080"
+    volumes:
+      - nearbly-media:/var/lib/nearbly/media
+
 volumes:
   nearbly-postgres:
+  nearbly-media:

@@ -8,7 +8,8 @@ public sealed record CreateStoreRequest(
     string? Description = null,
     string? LogoUrl = null,
     string? PrimaryColor = null,
-    string? SecondaryColor = null);
+    string? SecondaryColor = null,
+    Guid? LogoMediaId = null);
 
 public sealed record UpdateStoreRequest(
     string Name,
@@ -17,6 +18,7 @@ public sealed record UpdateStoreRequest(
     string? LogoUrl = null,
     string? PrimaryColor = null,
     string? SecondaryColor = null,
+    Guid? LogoMediaId = null,
     bool? IsActive = null);
 
 public sealed record StoreResponse(
@@ -27,11 +29,12 @@ public sealed record StoreResponse(
     string? LogoUrl,
     string? PrimaryColor,
     string? SecondaryColor,
+    Guid? LogoMediaId,
     bool IsActive,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc)
 {
-    public static StoreResponse From(Store store) => new(store.Id, store.Name, store.Slug, store.Description, store.LogoUrl, store.PrimaryColor, store.SecondaryColor, store.IsActive, store.CreatedAtUtc, store.UpdatedAtUtc);
+    public static StoreResponse From(Store store) => new(store.Id, store.Name, store.Slug, store.Description, store.LogoMediaId.HasValue ? $"/media/{store.LogoMediaId}" : store.LogoUrl, store.PrimaryColor, store.SecondaryColor, store.LogoMediaId, store.IsActive, store.CreatedAtUtc, store.UpdatedAtUtc);
 }
 
 public interface IStoreService

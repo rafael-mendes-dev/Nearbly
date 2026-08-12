@@ -29,6 +29,7 @@ builder.Services.AddSwaggerGen(options =>
     options.OperationFilter<AuthorizationOperationFilter>();
 });
 builder.Services.AddAuthorization();
+builder.Services.AddOutputCache(options => options.AddPolicy("media", policy => policy.Expire(TimeSpan.FromDays(30)).Tag("media")));
 
 var app = builder.Build();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -42,6 +43,7 @@ app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseOutputCache();
 app.UseMiddleware<AdminOperationLoggingMiddleware>();
 
 if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))

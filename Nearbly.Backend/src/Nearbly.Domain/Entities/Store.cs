@@ -17,6 +17,7 @@ public sealed class Store
     public string Slug { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public string? LogoUrl { get; private set; }
+    public Guid? LogoMediaId { get; private set; }
     public string? PrimaryColor { get; private set; }
     public string? SecondaryColor { get; private set; }
     public bool IsActive { get; private set; } = true;
@@ -24,6 +25,7 @@ public sealed class Store
     public DateTimeOffset UpdatedAtUtc { get; private set; }
     public ICollection<StoreTab> Tabs { get; private set; } = new List<StoreTab>();
     public ICollection<Link> Links { get; private set; } = new List<Link>();
+    public MediaAsset? LogoMedia { get; private set; }
 
     public void Update(string name, string slug, string? description, string? logoUrl, string? primaryColor, string? secondaryColor, DateTimeOffset? nowUtc = null)
     {
@@ -40,6 +42,12 @@ public sealed class Store
 
     public void Deactivate() => IsActive = false;
     public void Activate() => IsActive = true;
+
+    public void SetLogoMedia(Guid? mediaId, DateTimeOffset? nowUtc = null)
+    {
+        LogoMediaId = mediaId;
+        UpdatedAtUtc = nowUtc ?? DateTimeOffset.UtcNow;
+    }
 
     private static string RequiredText(string value, int maxLength, string name)
     {

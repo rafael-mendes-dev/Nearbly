@@ -9,13 +9,16 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Nearbly.Application.Common;
 using Nearbly.Application.Features.Analytics;
+using Nearbly.Application.Features.Content;
 using Nearbly.Application.Features.Auth;
 using Nearbly.Application.Features.Links;
 using Nearbly.Application.Features.Public;
 using Nearbly.Application.Features.Stores;
 using Nearbly.Application.Features.Tabs;
+using Nearbly.Application.Features.Media;
 using Nearbly.Infrastructure.Identity;
 using Nearbly.Infrastructure.Persistence;
+using Nearbly.Infrastructure.Storage;
 
 namespace Nearbly.Infrastructure;
 
@@ -71,6 +74,13 @@ public static class DependencyInjection
         services.AddScoped<ILinkService, LinkService>();
         services.AddScoped<IPublicService, PublicService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();
+        services.AddScoped<IContentService, ContentService>();
+        services.AddScoped<IMediaService, MediaService>();
+        services.AddSingleton<IImageProcessor, ImageSharpProcessor>();
+        if (string.Equals(configuration["Media:Provider"], "s3", StringComparison.OrdinalIgnoreCase))
+            services.AddSingleton<IObjectStorage, S3ObjectStorage>();
+        else
+            services.AddSingleton<IObjectStorage, LocalObjectStorage>();
         return services;
     }
 

@@ -1,4 +1,5 @@
 using Nearbly.Application.Features.Public;
+using Nearbly.Application.Features.Media;
 
 namespace Nearbly.Api.Endpoints;
 
@@ -17,6 +18,13 @@ public static class PublicEndpoints
             await service.RegisterViewAsync(slug, request ?? new RegisterPageViewRequest(), ct);
             return Results.NoContent();
         }).AllowAnonymous().WithSummary("Register a public page view").Produces(StatusCodes.Status204NoContent).ProducesProblem(StatusCodes.Status400BadRequest).ProducesProblem(StatusCodes.Status404NotFound);
+        endpoints.MapGet("/media/{mediaId:guid}", async (Guid mediaId, HttpContext context, IMediaService service, CancellationToken ct) =>
+        {
+            var file = await service.OpenReadAsync(mediaId, ct);
+            if (file is null) return Results.NotFound();
+            context.Response.Headers.CacheControl = "public,max-age=2592000,immutable";
+            return Results.File(file.Content, "image/webp", enableRangeProcessing: true, entityTag: new Microsoft.Net.Http.Headers.EntityTagHeaderValue($"\"{mediaId:N}\""));
+        }).AllowAnonymous().WithTags("Public").WithSummary("Serve optimized media").Produces(StatusCodes.Status200OK).Produces(StatusCodes.Status404NotFound).CacheOutput("media");
         return endpoints;
     }
 }

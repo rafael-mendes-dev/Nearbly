@@ -15,11 +15,20 @@ public sealed class PublicService(INearblyDbContext db, TimeProvider timeProvide
                 store.Name,
                 store.Slug,
                 store.Description,
-                store.LogoUrl,
+                store.LogoMediaId.HasValue ? "/media/" + store.LogoMediaId : store.LogoUrl,
                 store.PrimaryColor,
                 store.SecondaryColor,
                 store.Links.Where(link => link.IsActive && link.StoreTabId == null).OrderBy(link => link.SortOrder).ThenBy(link => link.Id).Select(link => new PublicLinkResponse(link.Id, link.Type, link.Label, link.Icon, "/r/" + link.Id)).ToList(),
-                store.Tabs.Where(tab => tab.IsActive).OrderBy(tab => tab.SortOrder).ThenBy(tab => tab.Id).Select(tab => new PublicTabResponse(tab.Id, tab.Key, tab.Name, tab.SortOrder, tab.Links.Where(link => link.IsActive).OrderBy(link => link.SortOrder).ThenBy(link => link.Id).Select(link => new PublicLinkResponse(link.Id, link.Type, link.Label, link.Icon, "/r/" + link.Id)).ToList())).ToList()))
+                store.Tabs.Where(tab => tab.IsActive).OrderBy(tab => tab.SortOrder).ThenBy(tab => tab.Id).Select(tab => new PublicTabResponse(
+                    tab.Id,
+                    tab.Key,
+                    tab.Name,
+                    tab.ContentType.ToString().ToLower(),
+                    tab.SortOrder,
+                    tab.Links.Where(link => link.IsActive).OrderBy(link => link.SortOrder).ThenBy(link => link.Id).Select(link => new PublicLinkResponse(link.Id, link.Type, link.Label, link.Icon, "/r/" + link.Id)).ToList(),
+                    tab.Products.Where(product => product.IsActive).OrderBy(product => product.SortOrder).ThenBy(product => product.Id).Select(product => new PublicProductResponse(product.Id, product.Name, product.Description, "/media/" + product.MediaAssetId, product.Price, product.IsAvailable, product.SortOrder)).ToList(),
+                    tab.MarkdownBlocks.Where(block => block.IsActive).OrderBy(block => block.SortOrder).ThenBy(block => block.Id).Select(block => new PublicMarkdownBlockResponse(block.Id, block.Title, block.Markdown, block.SortOrder)).ToList(),
+                    tab.GalleryItems.Where(item => item.IsActive).OrderBy(item => item.SortOrder).ThenBy(item => item.Id).Select(item => new PublicGalleryItemResponse(item.Id, "/media/" + item.MediaAssetId, item.AltText, item.Caption, item.SortOrder)).ToList())).ToList()))
             .SingleOrDefaultAsync(cancellationToken);
     }
 

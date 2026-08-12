@@ -12,6 +12,7 @@ public sealed class StoreTabConfiguration : IEntityTypeConfiguration<StoreTab>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Key).HasMaxLength(80).IsRequired();
         builder.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        builder.Property(x => x.ContentType).HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.HasIndex(x => new { x.StoreId, x.Key }).IsUnique();
         builder.HasIndex(x => new { x.StoreId, x.IsActive, x.SortOrder });
         builder.HasOne(x => x.Store).WithMany(x => x.Tabs).HasForeignKey(x => x.StoreId).OnDelete(DeleteBehavior.Restrict);

@@ -10,7 +10,7 @@ public sealed class TabService(INearblyDbContext db, IValidator<CreateTabRequest
     public async Task<IReadOnlyList<TabResponse>> ListAsync(Guid storeId, CancellationToken cancellationToken)
     {
         await EnsureStoreAsync(storeId, cancellationToken);
-        return await db.StoreTabs.AsNoTracking().Where(x => x.StoreId == storeId).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).Select(x => new TabResponse(x.Id, x.StoreId, x.Key, x.Name, x.SortOrder, x.IsActive, x.CreatedAtUtc, x.UpdatedAtUtc)).ToListAsync(cancellationToken);
+        return await db.StoreTabs.AsNoTracking().Where(x => x.StoreId == storeId).OrderBy(x => x.SortOrder).ThenBy(x => x.Id).Select(x => new TabResponse(x.Id, x.StoreId, x.Key, x.Name, x.ContentType.ToString().ToLower(), x.SortOrder, x.IsActive, x.CreatedAtUtc, x.UpdatedAtUtc)).ToListAsync(cancellationToken);
     }
 
     public async Task<TabResponse> GetAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken) =>
@@ -20,7 +20,7 @@ public sealed class TabService(INearblyDbContext db, IValidator<CreateTabRequest
     {
         await EnsureStoreAsync(storeId, cancellationToken);
         await createValidator.ValidateAndThrowAsync(request, cancellationToken);
-        var tab = new StoreTab(storeId, request.Key, request.Name, request.SortOrder, timeProvider.GetUtcNow());
+        var tab = new StoreTab(storeId, request.Key, request.Name, request.SortOrder, timeProvider.GetUtcNow(), ContentTypeParser.Parse(request.ContentType));
         db.StoreTabs.Add(tab);
         await SaveAsync(cancellationToken);
         return TabResponse.From(tab);
@@ -30,7 +30,11 @@ public sealed class TabService(INearblyDbContext db, IValidator<CreateTabRequest
     {
         await updateValidator.ValidateAndThrowAsync(request, cancellationToken);
         var tab = await GetEntityAsync(storeId, tabId, cancellationToken);
+        var contentType = ContentTypeParser.Parse(request.ContentType ?? tab.ContentType.ToWireValue());
+        var hasContent = await HasContentAsync(tabId, cancellationToken);
+        if (hasContent && contentType != tab.ContentType) throw new ConflictException("A tab with content cannot change its content type.");
         tab.Update(request.Key, request.Name, request.SortOrder, timeProvider.GetUtcNow());
+        tab.ChangeContentType(contentType, hasContent, timeProvider.GetUtcNow());
         if (request.IsActive is true) tab.Activate();
         if (request.IsActive is false) tab.Deactivate();
         await SaveAsync(cancellationToken);
@@ -53,6 +57,12 @@ public sealed class TabService(INearblyDbContext db, IValidator<CreateTabRequest
         if (!await db.Stores.AnyAsync(x => x.Id == storeId, cancellationToken))
             throw new NotFoundException("Store not found.");
     }
+
+    private async Task<bool> HasContentAsync(Guid tabId, CancellationToken cancellationToken) =>
+        await db.Links.AnyAsync(x => x.StoreTabId == tabId, cancellationToken)
+        || await db.Products.AnyAsync(x => x.StoreTabId == tabId, cancellationToken)
+        || await db.MarkdownBlocks.AnyAsync(x => x.StoreTabId == tabId, cancellationToken)
+        || await db.GalleryItems.AnyAsync(x => x.StoreTabId == tabId, cancellationToken);
 
     private async Task SaveAsync(CancellationToken cancellationToken)
     {

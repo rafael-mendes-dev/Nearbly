@@ -99,6 +99,63 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         Assert.Single(publicStore.Links);
         Assert.DoesNotContain("example.com", JsonSerializer.Serialize(publicStore));
 
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+        var productTab = await client.PostAsJsonAsync($"/api/admin/stores/{storeId}/tabs", new { key = "products", name = "Produtos", contentType = "products", sortOrder = 1 });
+        Assert.Equal(HttpStatusCode.Created, productTab.StatusCode);
+        var productTabId = (await productTab.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var markdownTab = await client.PostAsJsonAsync($"/api/admin/stores/{storeId}/tabs", new { key = "about", name = "Sobre", contentType = "markdown", sortOrder = 2 });
+        Assert.Equal(HttpStatusCode.Created, markdownTab.StatusCode);
+        var markdownTabId = (await markdownTab.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var galleryTab = await client.PostAsJsonAsync($"/api/admin/stores/{storeId}/tabs", new { key = "photos", name = "Fotos", contentType = "gallery", sortOrder = 3 });
+        Assert.Equal(HttpStatusCode.Created, galleryTab.StatusCode);
+        var galleryTabId = (await galleryTab.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+
+        using var invalidUploadContent = new MultipartFormDataContent();
+        invalidUploadContent.Add(new ByteArrayContent(Encoding.UTF8.GetBytes("not-an-image")), "file", "fake.png");
+        var invalidUpload = await client.PostAsync($"/api/admin/stores/{storeId}/media", invalidUploadContent);
+        Assert.Equal(HttpStatusCode.BadRequest, invalidUpload.StatusCode);
+        using var oversizedUploadContent = new MultipartFormDataContent();
+        var oversizedImage = new ByteArrayContent(new byte[(5 * 1024 * 1024) + 1]);
+        oversizedImage.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        oversizedUploadContent.Add(oversizedImage, "file", "large.png");
+        var oversizedUpload = await client.PostAsync($"/api/admin/stores/{storeId}/media", oversizedUploadContent);
+        Assert.Equal(HttpStatusCode.BadRequest, oversizedUpload.StatusCode);
+
+        using var uploadContent = new MultipartFormDataContent();
+        var imageContent = new ByteArrayContent(Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="));
+        imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+        uploadContent.Add(imageContent, "file", "pixel.png");
+        var upload = await client.PostAsync($"/api/admin/stores/{storeId}/media", uploadContent);
+        Assert.Equal(HttpStatusCode.Created, upload.StatusCode);
+        var media = await upload.Content.ReadFromJsonAsync<JsonElement>();
+        var mediaId = media.GetProperty("id").GetGuid();
+        Assert.Equal("image/webp", media.GetProperty("mimeType").GetString());
+        var servedMedia = await client.GetAsync($"/media/{mediaId}");
+        Assert.Equal(HttpStatusCode.OK, servedMedia.StatusCode);
+        Assert.Equal("image/webp", servedMedia.Content.Headers.ContentType?.MediaType);
+
+        var product = await client.PostAsJsonAsync($"/api/admin/stores/{storeId}/tabs/{productTabId}/products", new { name = "Café coado", description = "250 ml", mediaAssetId = mediaId, price = 8.5m, isAvailable = true, sortOrder = 0 });
+        Assert.Equal(HttpStatusCode.Created, product.StatusCode);
+        var wrongType = await client.PostAsJsonAsync($"/api/admin/stores/{storeId}/tabs/{productTabId}/markdown-blocks", new { title = "Inválido", markdown = "texto" });
+        Assert.Equal(HttpStatusCode.Conflict, wrongType.StatusCode);
+        var markdown = await client.PostAsJsonAsync($"/api/admin/stores/{storeId}/tabs/{markdownTabId}/markdown-blocks", new { title = "Horários", markdown = "## Semana\n\n*Aberto*", sortOrder = 0 });
+        Assert.Equal(HttpStatusCode.Created, markdown.StatusCode);
+        var gallery = await client.PostAsJsonAsync($"/api/admin/stores/{storeId}/tabs/{galleryTabId}/gallery-items", new { mediaAssetId = mediaId, altText = "Café coado", caption = "Nosso café", sortOrder = 0 });
+        Assert.Equal(HttpStatusCode.Created, gallery.StatusCode);
+        var changeTypeWithContent = await client.PutAsJsonAsync($"/api/admin/stores/{storeId}/tabs/{productTabId}", new { key = "products", name = "Produtos", contentType = "markdown", sortOrder = 1, isActive = true });
+        Assert.Equal(HttpStatusCode.Conflict, changeTypeWithContent.StatusCode);
+        var referencedMedia = await client.DeleteAsync($"/api/admin/stores/{storeId}/media/{mediaId}");
+        Assert.Equal(HttpStatusCode.Conflict, referencedMedia.StatusCode);
+
+        client.DefaultRequestHeaders.Authorization = null;
+        var publicWithContent = await client.GetFromJsonAsync<PublicStoreResponse>("/api/public/stores/cafe-central");
+        Assert.Equal("products", publicWithContent!.Tabs.Single(tab => tab.Id == productTabId).ContentType);
+        Assert.Single(publicWithContent.Tabs.Single(tab => tab.Id == productTabId).Products);
+        Assert.Single(publicWithContent.Tabs.Single(tab => tab.Id == markdownTabId).MarkdownBlocks);
+        Assert.Single(publicWithContent.Tabs.Single(tab => tab.Id == galleryTabId).GalleryItems);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+
         var view = await client.PostAsJsonAsync("/api/public/stores/cafe-central/views", new RegisterPageViewRequest(TrafficSource.Nfc));
         Assert.Equal(HttpStatusCode.NoContent, view.StatusCode);
         var secondView = await client.PostAsJsonAsync("/api/public/stores/cafe-central/views", new RegisterPageViewRequest(TrafficSource.QrCode));
@@ -143,7 +200,7 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         Assert.Equal(HttpStatusCode.NoContent, deactivateTab.StatusCode);
         client.DefaultRequestHeaders.Authorization = null;
         var publicWithoutTab = await client.GetFromJsonAsync<PublicStoreResponse>("/api/public/stores/cafe-central");
-        Assert.Empty(publicWithoutTab!.Tabs);
+        Assert.DoesNotContain(publicWithoutTab!.Tabs, tab => tab.Id == tabId);
         var redirectFromInactiveTab = await client.GetAsync($"/r/{linkId}?src=direct");
         Assert.Equal(HttpStatusCode.Redirect, redirectFromInactiveTab.StatusCode);
 
@@ -154,7 +211,7 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         Assert.Equal(HttpStatusCode.OK, reactivateTab.StatusCode);
         client.DefaultRequestHeaders.Authorization = null;
         var publicAfterReactivation = await client.GetFromJsonAsync<PublicStoreResponse>("/api/public/stores/cafe-central");
-        Assert.Single(publicAfterReactivation!.Tabs);
+        Assert.Contains(publicAfterReactivation!.Tabs, tab => tab.Id == tabId);
 
         using var scope = fixture.Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<NearblyDbContext>();

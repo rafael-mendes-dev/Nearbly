@@ -14,6 +14,7 @@ public sealed class StoreConfiguration : IEntityTypeConfiguration<Store>
         builder.Property(x => x.Slug).HasMaxLength(120).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(500);
         builder.Property(x => x.LogoUrl).HasMaxLength(2_048);
+        builder.HasOne(x => x.LogoMedia).WithMany().HasForeignKey(x => x.LogoMediaId).OnDelete(DeleteBehavior.Restrict);
         builder.Property(x => x.PrimaryColor).HasMaxLength(7);
         builder.Property(x => x.SecondaryColor).HasMaxLength(7);
         builder.HasIndex(x => x.Slug).IsUnique();

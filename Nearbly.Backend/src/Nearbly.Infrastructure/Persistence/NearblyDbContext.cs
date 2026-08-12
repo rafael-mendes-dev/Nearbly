@@ -11,6 +11,10 @@ public sealed class NearblyDbContext(DbContextOptions<NearblyDbContext> options)
     public DbSet<Store> Stores => Set<Store>();
     public DbSet<StoreTab> StoreTabs => Set<StoreTab>();
     public DbSet<Link> Links => Set<Link>();
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<MarkdownBlock> MarkdownBlocks => Set<MarkdownBlock>();
+    public DbSet<GalleryItem> GalleryItems => Set<GalleryItem>();
+    public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<PageView> PageViews => Set<PageView>();
     public DbSet<LinkClick> LinkClicks => Set<LinkClick>();
 
