@@ -25,7 +25,8 @@ export default function ContentPage({ token }: { token: string }) {
   const tabs = useQuery({ queryKey: ['tabs', storeId], queryFn: () => api.tabs(storeId, token), enabled: Boolean(storeId) })
   const [selectedId, setSelectedId] = useState('')
   const [showTabForm, setShowTabForm] = useState(false)
-  const selected = tabs.data?.find((tab) => tab.id === selectedId) ?? tabs.data?.[0]
+  const activeTabs = tabs.data?.filter((tab) => tab.isActive) ?? []
+  const selected = activeTabs.find((tab) => tab.id === selectedId) ?? activeTabs[0]
 
   const saveTab = useMutation({
     mutationFn: (input: TabInput | { id: string; input: TabInput }) => 'id' in input
@@ -45,9 +46,9 @@ export default function ContentPage({ token }: { token: string }) {
     {showTabForm && <TabEditor saving={saveTab.isPending} error={saveTab.error} onCancel={() => setShowTabForm(false)} onSave={(input) => saveTab.mutate(input)} />}
     <div className="content-layout">
       <aside className="content-tabs" aria-label="Abas de conteúdo">
-        <div className="content-tabs-heading"><span>Abas</span><strong>{tabs.data?.length ?? 0}</strong></div>
-        {(tabs.data ?? []).map((tab) => <button type="button" className={`${selected?.id === tab.id ? 'is-active' : ''} ${tab.isActive ? '' : 'is-inactive'}`} key={tab.id} onClick={() => setSelectedId(tab.id)}><span><strong>{tab.name}</strong><small>{typeLabel(tab.contentType)} · {tab.isActive ? 'Ativa' : 'Inativa'}</small></span><span className="content-tab-order">{String(tab.sortOrder).padStart(2, '0')}</span></button>)}
-        {!tabs.data?.length && <p className="empty-state">Crie a primeira aba para começar.</p>}
+        <div className="content-tabs-heading"><span>Abas ativas</span><strong>{activeTabs.length}</strong></div>
+        {activeTabs.map((tab) => <button type="button" className={selected?.id === tab.id ? 'is-active' : ''} key={tab.id} onClick={() => setSelectedId(tab.id)}><span><strong>{tab.name}</strong><small>{typeLabel(tab.contentType)}</small></span><span className="content-tab-order">{String(tab.sortOrder).padStart(2, '0')}</span></button>)}
+        {!activeTabs.length && <p className="empty-state">{tabs.data?.length ? 'Nenhuma aba ativa.' : 'Crie a primeira aba para começar.'}</p>}
       </aside>
       {selected ? <ContentEditor key={selected.id} store={store.data} tab={selected} token={token} onUpdateTab={(input) => saveTab.mutate({ id: selected.id, input })} onDeactivate={() => window.confirm(`Desativar ${selected.name}?`) && deactivateTab.mutate(selected.id)} /> : <div className="content-empty"><ImagePlus size={28} /><strong>Seu conteúdo começa aqui</strong><p>Crie uma aba e selecione um formato.</p></div>}
     </div>
