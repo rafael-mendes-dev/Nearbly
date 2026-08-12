@@ -2,7 +2,7 @@
 
 ## Decisões atuais
 
-- **2026-08-12 | Arquitetura |** O backend usa um monólito modular em quatro projetos (`Domain`, `Application`, `Infrastructure`, `Api`) com Minimal APIs. **Motivo:** manter limites claros sem custo operacional de microserviços. **Impacto:** casos de uso ficam testáveis e a composição permanece em `Api`.
+- **2026-08-12 | Arquitetura |** O repositório é um monorepo com `Nearbly.Backend` e `Nearbly.Frontend`; o backend usa um monólito modular em quatro projetos (`Domain`, `Application`, `Infrastructure`, `Api`) com Minimal APIs. **Motivo:** manter os aplicativos separados e os limites internos claros sem custo operacional de microserviços. **Impacto:** casos de uso ficam testáveis e a composição permanece em `Api`.
 - **2026-08-12 | Persistência |** `INearblyDbContext` é o único contrato de acesso da aplicação; o `DbContext` implementa a unidade transacional de cada request. **Motivo:** evitar repositórios genéricos e abstrações redundantes. **Impacto:** queries específicas permanecem explícitas nos casos de uso.
 - **2026-08-12 | Eventos |** Visualizações e cliques armazenam somente origem e horários UTC. **Motivo:** privacidade por padrão. **Impacto:** não é possível fazer analytics por IP ou navegador.
 - **2026-08-12 | Identity |** O MVP usa `IdentityUserContext` em vez de `IdentityDbContext`, com tabelas `asp_net_*` e sem roles. **Motivo:** o produto não possui sistema de papéis nesta fase. **Impacto:** a migration inicial cria somente usuários, claims, logins e tokens necessários.
@@ -21,10 +21,10 @@
 ## Banco, testes e ambiente
 
 - PostgreSQL local é iniciado por `docker compose up -d postgres`.
-- Migrations ficam em `src/Nearbly.Infrastructure/Persistence/Migrations` e usam Infrastructure como projeto e Api como startup.
+- Migrations ficam em `Nearbly.Backend/src/Nearbly.Infrastructure/Persistence/Migrations` e usam Infrastructure como projeto e Api como startup.
 - Testes unitários não dependem de banco; testes de integração usam Testcontainers quando o Docker está disponível.
 
 ## Questões em aberto
 
-- O frontend administrativo será um consumidor separado da API e não faz parte deste MVP.
+- O frontend administrativo fica em `Nearbly.Frontend` e ainda é um consumidor inicial separado da API; a integração deve seguir `docs/API.md`.
 - O MVP ainda não inclui refresh token, paginação, upload de mídia, cache, filas ou gerenciamento de administradores.
