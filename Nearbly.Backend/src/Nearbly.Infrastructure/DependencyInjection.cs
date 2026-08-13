@@ -26,7 +26,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddNearblyInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default") ?? "Host=localhost;Port=5432;Database=nearbly;Username=nearbly;Password=nearbly";
+        var connectionString = configuration.GetConnectionString("Default");
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("ConnectionStrings:Default must be configured.");
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<BootstrapAdminOptions>(configuration.GetSection(BootstrapAdminOptions.SectionName));
         services.AddDbContext<NearblyDbContext>(options => options

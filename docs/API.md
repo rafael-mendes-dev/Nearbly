@@ -660,7 +660,7 @@ O arquivo .env local não é versionado:
 | BootstrapAdmin__Email | sim para criar admin | Email inicial. |
 | BootstrapAdmin__Password | sim para criar admin | Senha inicial, não redefinida depois. |
 | BootstrapAdmin__DisplayName | não | Configuração reservada para identificação futura. |
-| Cors__AllowedOrigins__0 | não | Origem do frontend, por exemplo http://localhost:5173. |
+| Cors__AllowedOrigins__0 | não | Origem do frontend, por exemplo http://localhost:4321. |
 | Swagger__Enabled | não | Necessário somente fora de Development. |
 | Media__Provider | não | `filesystem` (padrão) ou `s3`. |
 | Media__RootPath | não | Diretório do storage local. No Compose, use `/var/lib/nearbly/media`. |
