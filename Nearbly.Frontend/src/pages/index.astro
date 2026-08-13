@@ -8,7 +8,7 @@ import { BlurText } from '../components/react-bits/BlurText'
 import { StarBorder } from '../components/react-bits/StarBorder'
 import { Magnet } from '../components/react-bits/Magnet'
 import { ScrollFloat } from '../components/react-bits/ScrollFloat'
-import { ScrollStack } from '../components/react-bits/ScrollStack'
+import { ScrollStack, type ScrollStackItem } from '../components/react-bits/ScrollStack'
 import { ScrollVelocity } from '../components/react-bits/ScrollVelocity'
 import ParallaxMedia from '../components/marketing/ParallaxMedia'
 
@@ -21,10 +21,10 @@ const schema = {
     { '@type': 'WebSite', name: 'Nearbly', url: siteUrl, inLanguage: 'pt-BR' },
   ],
 }
-const homeFeatures = [
-  { index: '01 / 03', label: 'Página', title: 'Seu espaço online.', description: 'Uma página pública com sua identidade, descrição, abas e links essenciais. Tudo no lugar certo para uma decisão rápida.', detail: 'Identidade · abas · links organizados' },
-  { index: '02 / 03', label: 'Acesso', title: 'Chegada imediata.', description: 'QR Code e NFC reduzem a distância entre a experiência física e o próximo clique, sem exigir busca ou digitação.', detail: 'NFC · QR Code · acesso direto' },
-  { index: '03 / 03', label: 'Leitura', title: 'Métricas que orientam.', description: 'Visualizações, cliques, origens e links mais acessados mostram o que as pessoas procuram depois de chegar.', detail: 'Analytics · origem · conversão' },
+const homeFeatures: ScrollStackItem[] = [
+  { index: '01 / 03', label: 'Página', title: 'Seu espaço online.', description: 'Uma página pública com sua identidade, descrição, abas e links essenciais. Tudo no lugar certo para uma decisão rápida.', detail: 'Identidade · abas · links organizados', icon: 'page' },
+  { index: '02 / 03', label: 'Acesso', title: 'Chegada imediata.', description: 'QR Code e NFC reduzem a distância entre a experiência física e o próximo clique, sem exigir busca ou digitação.', detail: 'NFC · QR Code · acesso direto', icon: 'access' },
+  { index: '03 / 03', label: 'Leitura', title: 'Métricas que orientam.', description: 'Visualizações, cliques, origens e links mais acessados mostram o que as pessoas procuram depois de chegar.', detail: 'Analytics · origem · conversão', icon: 'reading' },
 ]
 ---
 <BaseLayout title="Nearbly | presença digital para negócios locais" description="Uma página simples para cada negócio. Links, acessos e cliques organizados para negócios de Curitiba." canonical="/" schema={schema} barba>

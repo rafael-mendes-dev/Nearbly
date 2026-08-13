@@ -1,3 +1,4 @@
+import { BarChart3, LayoutTemplate, Nfc } from 'lucide-react'
 import { useRef } from 'react'
 import { motion, useScroll, useTransform, type MotionValue } from 'motion/react'
 import { SpotlightCard } from './SpotlightCard'
@@ -10,7 +11,10 @@ export interface ScrollStackItem {
   title: string
   description: string
   detail: string
+  icon?: 'page' | 'access' | 'reading'
 }
+
+const ICONS = { page: LayoutTemplate, access: Nfc, reading: BarChart3 }
 
 interface StackPanelProps {
   item: ScrollStackItem
@@ -20,14 +24,17 @@ interface StackPanelProps {
 }
 
 function StackPanel({ item, position, total, progress }: StackPanelProps) {
+  const isLast = position === total - 1
   const entryStart = position === 0 ? 0 : position / total - 0.16
   const entryEnd = position === 0 ? 0.01 : position / total
   const exitStart = Math.min((position + 1) / total, 0.98)
   const exitEnd = Math.min(exitStart + 0.15, 1)
   const y = useTransform(progress, [entryStart, entryEnd], [position === 0 ? '0%' : '105%', '0%'])
-  const scale = useTransform(progress, [exitStart, exitEnd], [1, 0.92])
-  const opacity = useTransform(progress, [exitStart, exitEnd], [1, 0.48])
+  const scale = useTransform(progress, isLast ? [0, 1] : [exitStart, exitEnd], isLast ? [1, 1] : [1, 0.88])
+  const opacity = useTransform(progress, isLast ? [0, 1] : [exitStart, exitEnd], isLast ? [1, 1] : [1, 0])
   const reducedMotion = useHydratedReducedMotion()
+  const Icon = item.icon ? ICONS[item.icon] : null
+  const chips = item.detail.split(' · ')
 
   return (
     <motion.article
@@ -35,15 +42,18 @@ function StackPanel({ item, position, total, progress }: StackPanelProps) {
       style={reducedMotion ? { zIndex: position + 1 } : { y, scale, opacity, zIndex: position + 1 }}
     >
       <SpotlightCard className="rb-scroll-stack-card">
+        <span className="rb-stack-panel-ghost" aria-hidden="true">{item.index.split(' ')[0]}</span>
         <div className="rb-stack-panel-top">
-          <span>{item.index}</span>
-          <span>{item.label}</span>
+          <span className="rb-stack-panel-index">{item.index}</span>
+          <span className="rb-stack-panel-label">{Icon && <Icon size={14} />}{item.label}</span>
         </div>
         <div className="rb-stack-panel-copy">
           <h3>{item.title}</h3>
           <p>{item.description}</p>
         </div>
-        <p className="rb-stack-panel-detail">{item.detail}</p>
+        <div className="rb-stack-panel-detail">
+          {chips.map(chip => <span key={chip}>{chip}</span>)}
+        </div>
       </SpotlightCard>
     </motion.article>
   )

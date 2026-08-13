@@ -118,7 +118,13 @@
 .cta-band-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 42px; }
 .cta-band h2 { max-width: 700px; margin: 0; font: 600 clamp(2.1rem, 4vw, 4.3rem)/.98 var(--display); }
 .cta-band .button-primary { color: var(--paper); background: #fff; box-shadow: none; }
-.marketing-footer { padding: 30px 0; color: #77839b; border-top: 1px solid var(--line); background: var(--paper); font-size: .8rem; }
+.marketing-footer { padding: 34px 0 30px; color: #77839b; border-top: 1px solid var(--line); background: var(--paper); font-size: .8rem; }
+.footer-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-bottom: 22px; margin-bottom: 22px; border-bottom: 1px solid var(--line); }
+.footer-brand { display: inline-flex; align-items: center; gap: 9px; color: var(--ink); font: 600 .98rem var(--display); text-decoration: none; }
+.footer-brand img { width: 22px; height: 22px; }
+.footer-links { display: flex; align-items: center; gap: 26px; }
+.footer-links a { color: var(--muted); font-weight: 600; text-decoration: none; transition: color 140ms ease; }
+.footer-links a:hover { color: #fff; }
 .footer-inner { display: flex; justify-content: space-between; gap: 20px; }
 
 .public-error { min-height: 100svh; display: grid; place-items: center; padding: 32px; color: var(--ink); background: var(--paper); }
@@ -169,8 +175,8 @@
   .location-section::before { background: linear-gradient(180deg, rgb(5 6 7 / 12%) 0%, rgb(5 6 7 / 52%) 48%, rgb(5 6 7 / 98%) 78%, #050607 100%); }
   .location-media img { object-position: 38% center; }
   .location-content { min-height: 760px; align-content: end; padding-bottom: 72px; }
-  .brand-canvas { min-height: 34svh; }
-  .brand-canvas img { width: 165%; max-width: none; }
+  .brand-canvas { min-height: 22svh; }
+  .brand-canvas img { width: min(92%, 1820px); }
   .display-card { right: -7%; }
   .page-section { padding: 70px 0; }
   .feature-grid { gap: 12px; margin-top: 34px; }
@@ -178,6 +184,8 @@
   .feature-item h3 { margin-top: 38px; }
   .flow { margin-top: 32px; }
   .flow-step { grid-template-columns: 40px 1fr; gap: 12px; padding: 20px 0; }
+  .footer-top { flex-direction: column; align-items: flex-start; gap: 18px; }
+  .footer-links { flex-wrap: wrap; gap: 14px 22px; }
   .footer-inner { flex-direction: column; }
   .rb-magnet { width: 100%; }
 }
