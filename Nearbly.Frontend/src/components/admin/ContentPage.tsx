@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import { ImagePlus, Link2, Plus, Settings, Trash2, Upload, X } from 'lucide-react'
 import { api, API_BASE_URL } from '../../lib/api/client'
+import { linkIcon, linkIconOptions } from '../../lib/link-icons'
 import { problemMessage } from '../../lib/api/problem'
 import type { ContentType, StoreResponse, TabInput, TabResponse } from '../../lib/api/types'
 
@@ -98,7 +99,18 @@ function LinksEditor({ storeId, tabId, token }: { storeId: string; tabId: string
   const [label, setLabel] = useState(''); const [url, setUrl] = useState(''); const [type, setType] = useState('website'); const [icon, setIcon] = useState('')
   const create = useMutation({ mutationFn: () => api.createLink(storeId, { type, label, icon: icon || null, url, sortOrder: links.data?.filter((item) => item.storeTabId === tabId).length ?? 0, storeTabId: tabId }, token), onSuccess: () => { setLabel(''); setUrl(''); void links.refetch() } })
   const tabLinks = (links.data ?? []).filter((link) => link.storeTabId === tabId)
-  return <ContentPanel title="Links" count={tabLinks.length}><form className="content-add-form" onSubmit={(event) => { event.preventDefault(); create.mutate() }}><label className="field"><span>Texto</span><input value={label} onChange={(event) => setLabel(event.target.value)} placeholder="Fale conosco" required /></label><label className="field"><span>Destino</span><input type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://..." required /></label><label className="field"><span>Tipo</span><select value={type} onChange={(event) => setType(event.target.value)}><option value="website">Site</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="facebook">Facebook</option><option value="location">Localização</option></select></label><label className="field"><span>Ícone</span><input value={icon} onChange={(event) => setIcon(event.target.value)} placeholder="globe" /></label><button className="button button-dark" type="submit" disabled={create.isPending}><Plus size={16} /> Adicionar link</button></form>{create.error && <div className="alert alert-error">{problemMessage(create.error)}</div>}{deactivate.error && <div className="alert alert-error">{problemMessage(deactivate.error)}</div>}<div className="content-items">{tabLinks.map((link) => <div className={`content-item-row ${link.isActive ? '' : 'is-inactive'}`} key={link.id}><Link2 size={17} /><span><strong>{link.label}</strong><small>{link.url}</small></span><span className={`status ${link.isActive ? 'status-active' : 'status-inactive'}`}>{link.isActive ? 'Ativo' : 'Inativo'}</span>{link.isActive && <button className="button-icon" type="button" disabled={deactivate.isPending} onClick={() => deactivate.mutate(link.id)} aria-label={`Desativar ${link.label}`}><Trash2 size={15} /></button>}</div>)}{!tabLinks.length && <p className="empty-state">Nenhum link nesta aba.</p>}</div></ContentPanel>
+  return <ContentPanel title="Links" count={tabLinks.length}>
+    <form className="content-add-form" onSubmit={(event) => { event.preventDefault(); create.mutate() }}>
+      <label className="field"><span>Texto</span><input value={label} onChange={(event) => setLabel(event.target.value)} placeholder="Fale conosco" required /></label>
+      <label className="field"><span>Destino</span><input type="url" value={url} onChange={(event) => setUrl(event.target.value)} placeholder="https://..." required /></label>
+      <label className="field"><span>Tipo</span><select value={type} onChange={(event) => setType(event.target.value)}><option value="website">Site</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="facebook">Facebook</option><option value="location">Localização</option></select></label>
+      <label className="field"><span>Ícone</span><div className="icon-select-control"><span className="icon-select-preview" aria-hidden="true">{linkIcon(icon || type, 19)}</span><select value={icon} onChange={(event) => setIcon(event.target.value)}>{linkIconOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div></label>
+      <button className="button button-dark" type="submit" disabled={create.isPending}><Plus size={16} /> Adicionar link</button>
+    </form>
+    {create.error && <div className="alert alert-error">{problemMessage(create.error)}</div>}
+    {deactivate.error && <div className="alert alert-error">{problemMessage(deactivate.error)}</div>}
+    <div className="content-items">{tabLinks.map((link) => <div className={`content-item-row ${link.isActive ? '' : 'is-inactive'}`} key={link.id}><span className="content-item-mark">{linkIcon(link.icon || link.type, 17)}</span><span><strong>{link.label}</strong><small>{link.url}</small></span><span className={`status ${link.isActive ? 'status-active' : 'status-inactive'}`}>{link.isActive ? 'Ativo' : 'Inativo'}</span>{link.isActive && <button className="button-icon" type="button" disabled={deactivate.isPending} onClick={() => deactivate.mutate(link.id)} aria-label={`Desativar ${link.label}`}><Trash2 size={15} /></button>}</div>)}{!tabLinks.length && <p className="empty-state">Nenhum link nesta aba.</p>}</div>
+  </ContentPanel>
 }
 
 function ProductsEditor({ storeId, tabId, token }: { storeId: string; tabId: string; token: string }) {

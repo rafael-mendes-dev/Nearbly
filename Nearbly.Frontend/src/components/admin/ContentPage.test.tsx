@@ -60,4 +60,22 @@ describe('ContentPage', () => {
     expect(await screen.findByText('Nenhuma aba ativa.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Desativar Links' })).not.toBeInTheDocument()
   })
+
+  it('submits an icon selected from the preset menu', async () => {
+    vi.spyOn(api, 'store').mockResolvedValue(store)
+    vi.spyOn(api, 'tabs').mockResolvedValue([tab])
+    vi.spyOn(api, 'links').mockResolvedValue([])
+    const createLink = vi.spyOn(api, 'createLink').mockResolvedValue(activeLink)
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    const user = userEvent.setup()
+    render(<QueryClientProvider client={queryClient}><MemoryRouter initialEntries={[`/lojas/${store.id}/conteudo`]}><Routes><Route path="/lojas/:storeId/conteudo" element={<ContentPage token="token" />} /></Routes></MemoryRouter></QueryClientProvider>)
+
+    await user.type(await screen.findByLabelText('Texto'), 'Nosso mapa')
+    await user.type(screen.getByLabelText('Destino'), 'https://maps.google.com/?q=cafe')
+    await user.selectOptions(screen.getByLabelText('Ícone'), 'maps')
+    await user.click(screen.getByRole('button', { name: 'Adicionar link' }))
+
+    expect(createLink).toHaveBeenCalledWith(store.id, expect.objectContaining({ icon: 'maps' }), 'token')
+  })
 })
