@@ -12,12 +12,14 @@ public sealed class StoreConfiguration : IEntityTypeConfiguration<Store>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name).HasMaxLength(160).IsRequired();
         builder.Property(x => x.Slug).HasMaxLength(120).IsRequired();
+        builder.Property(x => x.PublicCode).HasMaxLength(34).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(500);
         builder.Property(x => x.LogoUrl).HasMaxLength(2_048);
         builder.HasOne(x => x.LogoMedia).WithMany().HasForeignKey(x => x.LogoMediaId).OnDelete(DeleteBehavior.Restrict);
         builder.Property(x => x.PrimaryColor).HasMaxLength(7);
         builder.Property(x => x.SecondaryColor).HasMaxLength(7);
         builder.HasIndex(x => x.Slug).IsUnique();
+        builder.HasIndex(x => x.PublicCode).IsUnique();
         builder.HasIndex(x => new { x.IsActive, x.Name });
     }
 }

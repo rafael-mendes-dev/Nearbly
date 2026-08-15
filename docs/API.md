@@ -134,6 +134,7 @@ Não há refresh token. Remova o token quando expirar ou no logout.
   "id": "9b7d6d9d-7d20-4c2e-ae60-7c3f4b9af100",
   "name": "Café Central",
   "slug": "cafe-central",
+  "publicCode": "s_9b7d6d9d7d204c2eae607c3f4b9af100",
   "description": "Café no centro",
   "logoUrl": "https://cdn.example.com/logo.png",
   "logoMediaId": null,
@@ -150,6 +151,7 @@ Não há refresh token. Remova o token quando expirar ou no logout.
 | id | uuid | não | Identificador. |
 | name | string | não | Até 160 caracteres. |
 | slug | string | não | Normalizado, único globalmente, até 120 caracteres. |
+| publicCode | string | não | Código aleatório e imutável da página pública; use-o em QR Codes e cartões. |
 | description | string | sim | Até 500 caracteres. |
 | logoUrl | string | sim | URL HTTP/HTTPS sem credenciais ou caminho interno `/media/{mediaId}` quando logoMediaId estiver preenchido. |
 | logoMediaId | uuid | sim | Mídia otimizada da loja; quando preenchido, tem prioridade sobre logoUrl. |
@@ -273,6 +275,7 @@ PublicStoreResponse:
   "id": "9b7d6d9d-7d20-4c2e-ae60-7c3f4b9af100",
   "name": "Café Central",
   "slug": "cafe-central",
+  "publicCode": "s_9b7d6d9d7d204c2eae607c3f4b9af100",
   "description": "Café no centro",
   "logoUrl": "https://cdn.example.com/logo.png",
   "primaryColor": "#112233",
@@ -459,15 +462,17 @@ sources sempre contém Nfc, QrCode, Direct e Unknown. topLinks retorna no máxim
 
 ## 6. Endpoints públicos
 
-### GET /api/public/stores/{slug}
+### GET /api/public/stores/{identifier}
 
 Retorna a página pública sem token:
 
 ~~~bash
-curl http://localhost:5112/api/public/stores/cafe-central
+curl http://localhost:5112/api/public/stores/s_9b7d6d9d7d204c2eae607c3f4b9af100
 ~~~
 
 Resposta 200: PublicStoreResponse. Respostas: 200 e 404.
+
+Use `publicCode` como identificador permanente em QR Codes e cartões. Slugs existentes continuam aceitos para compatibilidade, mas deixam de resolver após uma alteração de slug.
 
 Filtros:
 
@@ -479,12 +484,12 @@ Filtros:
 - Link de aba ativa aparece em tabs[].links.
 - URL externa nunca é exposta.
 
-### POST /api/public/stores/{slug}/views
+### POST /api/public/stores/{identifier}/views
 
 Registra uma visualização sem token:
 
 ~~~bash
-curl -i -X POST http://localhost:5112/api/public/stores/cafe-central/views -H 'Content-Type: application/json' -d '{"source":"QrCode"}'
+curl -i -X POST http://localhost:5112/api/public/stores/s_9b7d6d9d7d204c2eae607c3f4b9af100/views -H 'Content-Type: application/json' -d '{"source":"QrCode"}'
 ~~~
 
 Request opcional: RegisterPageViewRequest. source omitido significa Direct. Retorna 204 sem corpo. Respostas: 204, 400 e 404.
@@ -531,8 +536,8 @@ Regras:
 
 ### Página pública
 
-1. Resolva o slug.
-2. Faça GET /api/public/stores/{slug}.
+1. Obtenha o `publicCode` da loja.
+2. Faça GET /api/public/stores/{identifier} usando esse código.
 3. Renderize links e tabs.
 4. Use href exatamente como retornado, resolvendo contra a origem da API.
 5. Registre uma visualização por carregamento real.
@@ -560,6 +565,7 @@ export interface StoreResponse {
   id: string;
   name: string;
   slug: string;
+  publicCode: string;
   description: string | null;
   logoUrl: string | null;
   logoMediaId: string | null;
@@ -624,6 +630,7 @@ export interface PublicStoreResponse {
   id: string;
   name: string;
   slug: string;
+  publicCode: string;
   description: string | null;
   logoUrl: string | null;
   primaryColor: string | null;

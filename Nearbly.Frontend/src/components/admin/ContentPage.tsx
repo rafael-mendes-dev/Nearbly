@@ -64,7 +64,7 @@ function ContentEditor({ store, tab, token, onUpdateTab, onDeactivate }: { store
     {type === 'products' && <ProductsEditor storeId={tab.storeId} tabId={tab.id} token={token} />}
     {type === 'markdown' && <MarkdownEditor storeId={tab.storeId} tabId={tab.id} token={token} />}
     {type === 'gallery' && <GalleryEditor storeId={tab.storeId} tabId={tab.id} token={token} />}
-    {store && <p className="content-footnote">As alterações aparecem na página pública de <strong>/{store.slug}</strong>.</p>}
+    {store && <p className="content-footnote">As alterações aparecem na página pública de <strong>/{store.publicCode}</strong>.</p>}
   </div>
 }
 

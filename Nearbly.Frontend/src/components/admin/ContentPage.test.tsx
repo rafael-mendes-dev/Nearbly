@@ -8,7 +8,7 @@ import { api } from '../../lib/api/client'
 import type { AdminLinkResponse, StoreResponse, TabResponse } from '../../lib/api/types'
 
 const store: StoreResponse = {
-  id: 'store-1', name: 'Café Central', slug: 'cafe-central', description: null, logoUrl: null, logoMediaId: null,
+  id: 'store-1', name: 'Café Central', slug: 'cafe-central', publicCode: 's_store1', description: null, logoUrl: null, logoMediaId: null,
   primaryColor: null, secondaryColor: null, isActive: true, createdAtUtc: '', updatedAtUtc: '',
 }
 

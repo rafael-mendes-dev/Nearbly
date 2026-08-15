@@ -8,7 +8,7 @@ namespace Nearbly.Application.Features.Stores;
 public sealed class StoreService(INearblyDbContext db, IValidator<CreateStoreRequest> createValidator, IValidator<UpdateStoreRequest> updateValidator, TimeProvider timeProvider) : IStoreService
 {
     public async Task<IReadOnlyList<StoreResponse>> ListAsync(CancellationToken cancellationToken) =>
-        await db.Stores.AsNoTracking().OrderBy(x => x.Name).ThenBy(x => x.Id).Select(x => new StoreResponse(x.Id, x.Name, x.Slug, x.Description, x.LogoMediaId.HasValue ? "/media/" + x.LogoMediaId : x.LogoUrl, x.PrimaryColor, x.SecondaryColor, x.LogoMediaId, x.IsActive, x.CreatedAtUtc, x.UpdatedAtUtc)).ToListAsync(cancellationToken);
+        await db.Stores.AsNoTracking().OrderBy(x => x.Name).ThenBy(x => x.Id).Select(x => new StoreResponse(x.Id, x.Name, x.Slug, x.PublicCode, x.Description, x.LogoMediaId.HasValue ? "/media/" + x.LogoMediaId : x.LogoUrl, x.PrimaryColor, x.SecondaryColor, x.LogoMediaId, x.IsActive, x.CreatedAtUtc, x.UpdatedAtUtc)).ToListAsync(cancellationToken);
 
     public async Task<StoreResponse> GetAsync(Guid storeId, CancellationToken cancellationToken) =>
         StoreResponse.From(await GetEntityAsync(storeId, cancellationToken));

@@ -30,7 +30,7 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         {
             var paths = swaggerDocument.RootElement.GetProperty("paths");
             Assert.True(paths.GetProperty("/api/admin/stores").GetProperty("get").GetProperty("security").GetArrayLength() > 0);
-            Assert.False(paths.GetProperty("/api/public/stores/{slug}").GetProperty("get").TryGetProperty("security", out _));
+            Assert.False(paths.GetProperty("/api/public/stores/{identifier}").GetProperty("get").TryGetProperty("security", out _));
             Assert.Contains("Get a public store page", swaggerJson, StringComparison.Ordinal);
         }
 
@@ -60,6 +60,8 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         Assert.Equal(HttpStatusCode.Created, createStore.StatusCode);
         using var storeJson = JsonDocument.Parse(await createStore.Content.ReadAsStringAsync());
         var storeId = storeJson.RootElement.GetProperty("id").GetGuid();
+        var publicCode = storeJson.RootElement.GetProperty("publicCode").GetString();
+        Assert.Matches("^s_[0-9a-f]{32}$", publicCode);
 
         var duplicateStore = await client.PostAsJsonAsync("/api/admin/stores", new { name = "Outra Loja", slug = "cafe-central" });
         Assert.Equal(HttpStatusCode.Conflict, duplicateStore.StatusCode);
@@ -92,9 +94,12 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         var rootLinkId = rootLinkJson.RootElement.GetProperty("id").GetGuid();
 
         client.DefaultRequestHeaders.Authorization = null;
-        var publicStore = await client.GetFromJsonAsync<PublicStoreResponse>("/api/public/stores/cafe-central");
+        var publicStore = await client.GetFromJsonAsync<PublicStoreResponse>($"/api/public/stores/{publicCode}");
         Assert.NotNull(publicStore);
-        Assert.Single(publicStore!.Tabs);
+        Assert.Equal(publicCode, publicStore!.PublicCode);
+        Assert.Single(publicStore.Tabs);
+        var legacyPublicStore = await client.GetFromJsonAsync<PublicStoreResponse>("/api/public/stores/cafe-central");
+        Assert.Equal(publicCode, legacyPublicStore!.PublicCode);
         Assert.Equal($"/r/{linkId}", publicStore.Tabs[0].Links[0].Href);
         Assert.Single(publicStore.Links);
         Assert.DoesNotContain("example.com", JsonSerializer.Serialize(publicStore));
@@ -148,7 +153,7 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         Assert.Equal(HttpStatusCode.Conflict, referencedMedia.StatusCode);
 
         client.DefaultRequestHeaders.Authorization = null;
-        var publicWithContent = await client.GetFromJsonAsync<PublicStoreResponse>("/api/public/stores/cafe-central");
+        var publicWithContent = await client.GetFromJsonAsync<PublicStoreResponse>($"/api/public/stores/{publicCode}");
         Assert.Equal("products", publicWithContent!.Tabs.Single(tab => tab.Id == productTabId).ContentType);
         Assert.Single(publicWithContent.Tabs.Single(tab => tab.Id == productTabId).Products);
         Assert.Single(publicWithContent.Tabs.Single(tab => tab.Id == markdownTabId).MarkdownBlocks);
@@ -156,9 +161,17 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
 
-        var view = await client.PostAsJsonAsync("/api/public/stores/cafe-central/views", new RegisterPageViewRequest(TrafficSource.Nfc));
+        var updateStore = await client.PutAsJsonAsync($"/api/admin/stores/{storeId}", new { name = "Café Central", slug = "cafe-renovado", description = "Centro", primaryColor = "#112233", isActive = true });
+        Assert.Equal(HttpStatusCode.OK, updateStore.StatusCode);
+        var updatedStore = await updateStore.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(publicCode, updatedStore.GetProperty("publicCode").GetString());
+
+        var publicAfterSlugChange = await client.GetFromJsonAsync<PublicStoreResponse>($"/api/public/stores/{publicCode}");
+        Assert.Equal("cafe-renovado", publicAfterSlugChange!.Slug);
+
+        var view = await client.PostAsJsonAsync($"/api/public/stores/{publicCode}/views", new RegisterPageViewRequest(TrafficSource.Nfc));
         Assert.Equal(HttpStatusCode.NoContent, view.StatusCode);
-        var secondView = await client.PostAsJsonAsync("/api/public/stores/cafe-central/views", new RegisterPageViewRequest(TrafficSource.QrCode));
+        var secondView = await client.PostAsJsonAsync($"/api/public/stores/{publicCode}/views", new RegisterPageViewRequest(TrafficSource.QrCode));
         Assert.Equal(HttpStatusCode.NoContent, secondView.StatusCode);
 
         var redirect = await client.GetAsync($"/r/{linkId}?src=qr_code");
@@ -199,7 +212,7 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         var deactivateTab = await client.DeleteAsync($"/api/admin/stores/{storeId}/tabs/{tabId}");
         Assert.Equal(HttpStatusCode.NoContent, deactivateTab.StatusCode);
         client.DefaultRequestHeaders.Authorization = null;
-        var publicWithoutTab = await client.GetFromJsonAsync<PublicStoreResponse>("/api/public/stores/cafe-central");
+        var publicWithoutTab = await client.GetFromJsonAsync<PublicStoreResponse>($"/api/public/stores/{publicCode}");
         Assert.DoesNotContain(publicWithoutTab!.Tabs, tab => tab.Id == tabId);
         var redirectFromInactiveTab = await client.GetAsync($"/r/{linkId}?src=direct");
         Assert.Equal(HttpStatusCode.Redirect, redirectFromInactiveTab.StatusCode);
@@ -210,7 +223,7 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         var reactivateTab = await client.PutAsJsonAsync($"/api/admin/stores/{storeId}/tabs/{tabId}", new { key = "menu", name = "Menu", sortOrder = 0, isActive = true });
         Assert.Equal(HttpStatusCode.OK, reactivateTab.StatusCode);
         client.DefaultRequestHeaders.Authorization = null;
-        var publicAfterReactivation = await client.GetFromJsonAsync<PublicStoreResponse>("/api/public/stores/cafe-central");
+        var publicAfterReactivation = await client.GetFromJsonAsync<PublicStoreResponse>($"/api/public/stores/{publicCode}");
         Assert.Contains(publicAfterReactivation!.Tabs, tab => tab.Id == tabId);
 
         using var scope = fixture.Factory.Services.CreateScope();

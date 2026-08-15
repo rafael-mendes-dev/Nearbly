@@ -394,7 +394,7 @@ function AdminShell({
         <div className="admin-sidebar-bottom">
           <a
             className="admin-public-link"
-            href={storeQuery.data ? `/${storeQuery.data.slug}` : "/"}
+            href={storeQuery.data ? `/${storeQuery.data.publicCode}` : "/"}
             target="_blank"
             rel="noreferrer"
           >

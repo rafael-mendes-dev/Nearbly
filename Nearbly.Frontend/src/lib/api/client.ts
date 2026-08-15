@@ -49,8 +49,8 @@ const putJson = (body: unknown): RequestInit => ({ method: 'PUT', body: JSON.str
 
 export const api = {
   login: (input: LoginRequest) => request<LoginResponse>('/api/admin/auth/login', json(input)),
-  publicStore: (slug: string) => request<PublicStoreResponse>(`/api/public/stores/${encodeURIComponent(slug)}`),
-  registerView: (slug: string, source?: string) => request<void>(`/api/public/stores/${encodeURIComponent(slug)}/views`, {
+  publicStore: (identifier: string) => request<PublicStoreResponse>(`/api/public/stores/${encodeURIComponent(identifier)}`),
+  registerView: (identifier: string, source?: string) => request<void>(`/api/public/stores/${encodeURIComponent(identifier)}/views`, {
     ...json(source ? { source: source === 'nfc' ? 'Nfc' : source === 'qr_code' ? 'QrCode' : source === 'unknown' ? 'Unknown' : 'Direct' } : {}),
   }),
   stores: (token: string) => request<StoreResponse[]>('/api/admin/stores', {}, token),

@@ -28,6 +28,18 @@ public sealed class EntityInvariantTests
     }
 
     [Fact]
+    public void Store_PublicCodeIsGeneratedOnceAndDoesNotChangeWithSlug()
+    {
+        var store = new Store("Store", "minha-loja");
+        var publicCode = store.PublicCode;
+
+        store.Update("Store", "novo-slug", null, null, null, null);
+
+        Assert.Matches("^s_[0-9a-f]{32}$", publicCode);
+        Assert.Equal(publicCode, store.PublicCode);
+    }
+
+    [Fact]
     public void Tab_DefaultsToLinksAndCanChangeTypeBeforeReceivingContent()
     {
         var tab = new StoreTab(Guid.NewGuid(), "menu", "Menu");

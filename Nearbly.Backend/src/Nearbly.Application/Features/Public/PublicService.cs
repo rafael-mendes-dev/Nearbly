@@ -6,14 +6,15 @@ namespace Nearbly.Application.Features.Public;
 
 public sealed class PublicService(INearblyDbContext db, TimeProvider timeProvider) : IPublicService
 {
-    public async Task<PublicStoreResponse?> GetStoreAsync(string slug, CancellationToken cancellationToken)
+    public async Task<PublicStoreResponse?> GetStoreAsync(string identifier, CancellationToken cancellationToken)
     {
-        var normalizedSlug = SlugNormalizer.Normalize(slug);
-        return await db.Stores.AsNoTracking().Where(store => store.IsActive && store.Slug == normalizedSlug)
+        var stores = PublicStores(identifier);
+        return await stores.AsNoTracking()
             .Select(store => new PublicStoreResponse(
                 store.Id,
                 store.Name,
                 store.Slug,
+                store.PublicCode,
                 store.Description,
                 store.LogoMediaId.HasValue ? "/media/" + store.LogoMediaId : store.LogoUrl,
                 store.PrimaryColor,
@@ -32,12 +33,24 @@ public sealed class PublicService(INearblyDbContext db, TimeProvider timeProvide
             .SingleOrDefaultAsync(cancellationToken);
     }
 
-    public async Task RegisterViewAsync(string slug, RegisterPageViewRequest request, CancellationToken cancellationToken)
+    public async Task RegisterViewAsync(string identifier, RegisterPageViewRequest request, CancellationToken cancellationToken)
     {
-        var storeId = await db.Stores.Where(x => x.IsActive && x.Slug == SlugNormalizer.Normalize(slug)).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(cancellationToken)
+        var storeId = await PublicStores(identifier).Select(x => (Guid?)x.Id).SingleOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("Store not found.");
         db.PageViews.Add(new PageView(storeId, request.Source ?? TrafficSource.Direct, timeProvider.GetUtcNow()));
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private IQueryable<Store> PublicStores(string identifier)
+    {
+        if (Store.HasPublicCodeFormat(identifier))
+        {
+            var publicCode = identifier.Trim().ToLowerInvariant();
+            return db.Stores.Where(store => store.IsActive && store.PublicCode == publicCode);
+        }
+
+        var normalizedSlug = SlugNormalizer.Normalize(identifier);
+        return db.Stores.Where(store => store.IsActive && store.Slug == normalizedSlug);
     }
 
     public async Task<Uri> RegisterClickAsync(Guid linkId, TrafficSource source, CancellationToken cancellationToken)

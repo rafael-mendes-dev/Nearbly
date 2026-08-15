@@ -15,6 +15,7 @@
 - **2026-08-12 | OpenAPI |** A segurança Bearer é aplicada por operação a partir dos metadados de autorização, em vez de ser declarada globalmente. **Motivo:** endpoints públicos não devem aparentar exigir autenticação. **Impacto:** Swagger diferencia corretamente os fluxos público e administrativo.
 - **2026-08-12 | Conteúdo |** Abas usam `ContentType` (`links`, `products`, `markdown`, `gallery`) e os conteúdos tipados mantêm `StoreId` e `StoreTabId` para validar ownership no caso de uso. **Motivo:** impedir referências cruzadas e permitir contratos públicos previsíveis com quatro coleções. **Impacto:** trocar o tipo de uma aba é bloqueado enquanto existir conteúdo, inclusive desativado.
 - **2026-08-12 | Mídia |** Uploads são processados por ImageSharp para WebP, removem metadados e limitam a maior dimensão a 1600 px; `IObjectStorage` usa filesystem com volume no desenvolvimento e S3 compatível quando configurado. **Motivo:** manter o domínio independente do storage e evitar chaves privadas no contrato público. **Impacto:** produtos, galeria e logo referenciam `MediaAsset` por ID e mídia referenciada não pode ser desativada.
+- **2026-08-15 | Identificador público |** Cada loja recebe `publicCode` aleatório e imutável, derivado do UUID da própria loja e separado do slug. **Motivo:** QR Codes e cartões físicos não podem quebrar quando a loja altera o slug. **Impacto:** páginas públicas e visualizações devem usar `publicCode`; slugs continuam aceitos apenas para URLs legadas.
 
 ## Invariantes
 

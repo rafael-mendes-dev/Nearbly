@@ -11,6 +11,7 @@ export interface StoreResponse {
   id: string
   name: string
   slug: string
+  publicCode: string
   description: string | null
   logoUrl: string | null
   primaryColor: string | null
@@ -91,6 +92,7 @@ export interface PublicStoreResponse {
   id: string
   name: string
   slug: string
+  publicCode: string
   description: string | null
   logoUrl: string | null
   logoMediaId?: string | null

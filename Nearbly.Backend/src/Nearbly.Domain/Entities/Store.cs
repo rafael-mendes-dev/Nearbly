@@ -2,11 +2,14 @@ namespace Nearbly.Domain.Entities;
 
 public sealed class Store
 {
+    public const string PublicCodePrefix = "s_";
+
     private Store() { }
 
     public Store(string name, string slug, string? description = null, string? logoUrl = null, string? primaryColor = null, string? secondaryColor = null, DateTimeOffset? nowUtc = null)
     {
         Id = Guid.NewGuid();
+        PublicCode = $"{PublicCodePrefix}{Id:N}";
         var now = nowUtc ?? DateTimeOffset.UtcNow;
         Update(name, slug, description, logoUrl, primaryColor, secondaryColor, now);
         CreatedAtUtc = now;
@@ -15,6 +18,7 @@ public sealed class Store
     public Guid Id { get; private set; }
     public string Name { get; private set; } = string.Empty;
     public string Slug { get; private set; } = string.Empty;
+    public string PublicCode { get; private set; } = string.Empty;
     public string? Description { get; private set; }
     public string? LogoUrl { get; private set; }
     public Guid? LogoMediaId { get; private set; }
@@ -48,6 +52,9 @@ public sealed class Store
         LogoMediaId = mediaId;
         UpdatedAtUtc = nowUtc ?? DateTimeOffset.UtcNow;
     }
+
+    public static bool HasPublicCodeFormat(string identifier) =>
+        !string.IsNullOrWhiteSpace(identifier) && identifier.Trim().StartsWith(PublicCodePrefix, StringComparison.OrdinalIgnoreCase);
 
     private static string RequiredText(string value, int maxLength, string name)
     {

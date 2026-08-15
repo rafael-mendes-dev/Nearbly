@@ -25,6 +25,7 @@ public sealed record StoreResponse(
     Guid Id,
     string Name,
     string Slug,
+    string PublicCode,
     string? Description,
     string? LogoUrl,
     string? PrimaryColor,
@@ -34,7 +35,7 @@ public sealed record StoreResponse(
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc)
 {
-    public static StoreResponse From(Store store) => new(store.Id, store.Name, store.Slug, store.Description, store.LogoMediaId.HasValue ? $"/media/{store.LogoMediaId}" : store.LogoUrl, store.PrimaryColor, store.SecondaryColor, store.LogoMediaId, store.IsActive, store.CreatedAtUtc, store.UpdatedAtUtc);
+    public static StoreResponse From(Store store) => new(store.Id, store.Name, store.Slug, store.PublicCode, store.Description, store.LogoMediaId.HasValue ? $"/media/{store.LogoMediaId}" : store.LogoUrl, store.PrimaryColor, store.SecondaryColor, store.LogoMediaId, store.IsActive, store.CreatedAtUtc, store.UpdatedAtUtc);
 }
 
 public interface IStoreService
