@@ -55,6 +55,7 @@
 .icon-select-control { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
 .icon-select-preview { width: 44px; height: 42px; display: grid; place-items: center; border: 1px solid var(--line-strong); border-radius: 4px; color: var(--cyan); background: var(--primary-soft); }
 .color-field { min-width: 0; margin: 0; padding: 0; border: 0; }
+.color-field .field-hint { display: block; margin-top: 7px; }
 .color-field legend { margin-bottom: 7px; padding: 0; }
 .color-picker-control { display: grid; grid-template-columns: 44px minmax(0, 1fr) 42px; gap: 8px; }
 .field .color-picker-input { width: 44px; height: 42px; padding: 3px; cursor: pointer; }

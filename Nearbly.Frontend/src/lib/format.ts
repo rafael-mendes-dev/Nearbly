@@ -11,6 +11,26 @@ export const contrastText = (value: string | null | undefined) => {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) > 0.42 ? '#10211c' : '#ffffff'
 }
 
+const channelHex = (channel: number) => Math.round(Math.min(1, Math.max(0, channel)) * 255).toString(16).padStart(2, '0')
+
+/** Keeps the hue of a brand color but forces the lightness, so any secondary color can tint a dark surface without losing contrast. */
+export const shade = (value: string | null | undefined, lightness: number, saturationCap = 1) => {
+  const [red, green, blue] = isSafeColor(value)
+    ? [1, 3, 5].map((index) => Number.parseInt(value.slice(index, index + 2), 16) / 255)
+    : [0, 0, 0]
+  const max = Math.max(red, green, blue)
+  const delta = max - Math.min(red, green, blue)
+  const source = (max + Math.min(red, green, blue)) / 2
+  const saturation = Math.min(delta === 0 ? 0 : delta / (1 - Math.abs(2 * source - 1)), saturationCap)
+  const hue = delta === 0 ? 0 : 60 * (max === red ? ((((green - blue) / delta) % 6) + 6) % 6 : max === green ? (blue - red) / delta + 2 : (red - green) / delta + 4)
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation
+  const middle = chroma * (1 - Math.abs(((hue / 60) % 2) - 1))
+  const offset = lightness - chroma / 2
+  const sectors = [[chroma, middle, 0], [middle, chroma, 0], [0, chroma, middle], [0, middle, chroma], [middle, 0, chroma], [chroma, 0, middle]]
+  const [shadeRed, shadeGreen, shadeBlue] = sectors[Math.floor(hue / 60) % 6]
+  return `#${channelHex(shadeRed + offset)}${channelHex(shadeGreen + offset)}${channelHex(shadeBlue + offset)}`
+}
+
 export const fillDateGaps = (series: Array<{ date: string; views: number }>, from?: string, to?: string) => {
   if (!from || !to) return series
   const values = new Map(series.map((item) => [item.date, item.views]))

@@ -266,12 +266,14 @@ function ColorField({
   control,
   name,
   label,
+  hint,
   fallback,
   error,
 }: {
   control: Control<StoreFormValues>;
   name: "primaryColor" | "secondaryColor";
   label: string;
+  hint: string;
   fallback: `#${string}`;
   error?: string;
 }) {
@@ -318,6 +320,7 @@ function ColorField({
                 <X size={16} />
               </button>
             </div>
+            <small className="field-hint">{hint}</small>
             {fieldError(error)}
           </fieldset>
         );
@@ -764,6 +767,7 @@ function StoreForm({
           control={control}
           name="primaryColor"
           label="Cor principal"
+          hint="Botões de ação, aba ativa e destaques da página pública."
           fallback="#2B22E0"
           error={errors.primaryColor?.message}
         />
@@ -771,6 +775,7 @@ function StoreForm({
           control={control}
           name="secondaryColor"
           label="Cor secundária"
+          hint="Clima da página: fundo, cards, bordas e brilhos. É escurecida para manter a leitura."
           fallback="#06080F"
           error={errors.secondaryColor?.message}
         />
