@@ -167,6 +167,11 @@ type StoreFormValues = z.infer<typeof storeSchema>;
 type TabFormValues = z.infer<typeof tabSchema>;
 type LinkFormValues = z.infer<typeof linkSchema>;
 
+const normalizeStoreInput = (input: StoreInput): StoreInput => ({
+  ...input,
+  logoUrl: input.logoUrl?.trim() || null,
+});
+
 const linkTypeOptions = [
   {
     value: "website",
@@ -556,14 +561,30 @@ function StoreListPage({ token }: { token: string }) {
     queryFn: () => api.stores(token),
   });
   const mutation = useMutation({
-    mutationFn: (input: StoreInput | { id: string; input: StoreUpdate }) =>
-      "id" in input
-        ? api.updateStore(input.id, input.input, token)
-        : api.createStore(input, token),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["stores"] });
+    mutationFn: async (request: { id: string; input: StoreUpdate } | { input: StoreInput; logoFile: File | null }) => {
+      const normalizedInput = normalizeStoreInput(request.input);
+      if ("id" in request) return api.updateStore(request.id, normalizedInput, token);
+
+      const input = request.logoFile ? { ...normalizedInput, logoUrl: null } : normalizedInput;
+      const store = await api.createStore(input, token);
+      if (!request.logoFile) return store;
+
+      try {
+        const media = await api.uploadMedia(store.id, request.logoFile, token);
+        return await api.updateStore(store.id, { ...input, logoMediaId: media.id }, token);
+      } catch {
+        throw new Error("A loja foi criada, mas a logo não foi enviada. Abra as configurações da loja para tentar novamente.");
+      }
+    },
+    onSuccess: (store) => {
+      queryClient.setQueryData<StoreResponse[]>(["stores"], (stores = []) =>
+        [...stores.filter((item) => item.id !== store.id), store].sort(
+          (left, right) => left.name.localeCompare(right.name, "pt-BR") || left.id.localeCompare(right.id),
+        ),
+      );
       setEditing(undefined);
     },
+    onSettled: () => void queryClient.invalidateQueries({ queryKey: ["stores"] }),
   });
   const deactivate = useMutation({
     mutationFn: (id: string) => api.deactivateStore(id, token),
@@ -590,13 +611,13 @@ function StoreListPage({ token }: { token: string }) {
           saving={mutation.isPending}
           error={mutation.error}
           onCancel={() => setEditing(undefined)}
-          onSave={(input) =>
+          onSave={(input, logoFile) =>
             editing
               ? mutation.mutate({
                   id: editing.id,
                   input: { ...input, isActive: editing.isActive },
                 })
-              : mutation.mutate(input)
+              : mutation.mutate({ input, logoFile: logoFile ?? null })
           }
         />
       )}
@@ -673,8 +694,9 @@ function StoreForm({
   saving: boolean;
   error: unknown;
   onCancel: () => void;
-  onSave: (input: StoreInput) => void;
+  onSave: (input: StoreInput, logoFile?: File | null) => void;
 }) {
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const {
     control,
     register,
@@ -715,7 +737,7 @@ function StoreForm({
           <X size={18} />
         </button>
       </div>
-      <form className="form-grid" onSubmit={handleSubmit(onSave)}>
+      <form className="form-grid" onSubmit={handleSubmit((input) => onSave(input, logoFile))}>
         <Field label="Nome" error={errors.name?.message}>
           <input {...register("name")} placeholder="Café Central" />
         </Field>
@@ -732,6 +754,12 @@ function StoreForm({
         <Field label="Logo URL" error={errors.logoUrl?.message}>
           <input {...register("logoUrl")} placeholder="https://..." />
         </Field>
+        {!store && <label className="media-drop store-logo-upload">
+          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setLogoFile(event.target.files?.[0] ?? null)} aria-label="Selecionar logo da loja" />
+          <Upload size={20} />
+          <span>{logoFile?.name ?? "Enviar logo"}</span>
+          <small>JPEG, PNG ou WebP até 5 MB</small>
+        </label>}
         <ColorField
           control={control}
           name="primaryColor"
@@ -1529,7 +1557,7 @@ function SettingsPage({ token }: { token: string }) {
   const { storeId, store } = useWorkspace(token);
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (input: StoreUpdate) => api.updateStore(storeId, input, token),
+    mutationFn: (input: StoreUpdate) => api.updateStore(storeId, normalizeStoreInput(input), token),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["store", storeId] });
       void queryClient.invalidateQueries({ queryKey: ["stores"] });

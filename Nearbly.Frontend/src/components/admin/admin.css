@@ -181,6 +181,7 @@
 .logo-upload-preview { width: 64px; height: 64px; border: 1px solid var(--line-strong); border-radius: 5px; object-fit: cover; }
 .logo-upload-row { display: flex; align-items: center; gap: 14px; }
 .logo-upload-row .media-drop { width: min(100%, 300px); }
+.store-logo-upload { grid-column: span 2; min-height: 118px; }
 .qr-code-backdrop { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 72%); }
 .qr-code-dialog { width: min(100%, 480px); display: grid; gap: 18px; padding: 24px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); box-shadow: var(--shadow-lg); }
 .qr-code-dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
@@ -215,6 +216,7 @@
   .section-top > .button, .section-top > .status { align-self: flex-start; }
   .form-grid { grid-template-columns: 1fr; }
   .field:has(textarea), .field:has(input[type='url']), .sheet-actions { grid-column: auto; }
+  .store-logo-upload { grid-column: auto; }
   .sheet-actions { flex-direction: column-reverse; }
   .sheet-actions .button { width: 100%; }
   .metric-grid, .analytics-grid { grid-template-columns: 1fr; }
