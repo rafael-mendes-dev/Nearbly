@@ -94,6 +94,7 @@ import type {
   TabUpdate,
 } from "../../lib/api/types";
 import ContentPage from "./ContentPage";
+import { StoreQrCodeButton } from "./StoreQrCodeDialog";
 import { SpotlightCard } from "../react-bits/SpotlightCard";
 import "./admin.css";
 
@@ -774,11 +775,13 @@ function WorkspaceHeader({
   eyebrow,
   title,
   description,
+  action,
 }: {
   store: StoreResponse | undefined;
   eyebrow: string;
   title: string;
   description: string;
+  action?: React.ReactNode;
 }) {
   return (
     <div className="section-top">
@@ -790,13 +793,16 @@ function WorkspaceHeader({
         <h1>{title}</h1>
         <p>{description}</p>
       </div>
-      {store && (
-        <span
-          className={`status ${store.isActive ? "status-active" : "status-inactive"}`}
-        >
-          {store.isActive ? "Ativa" : "Inativa"}
-        </span>
-      )}
+      {(action || store) && <div className="workspace-header-actions">
+        {action}
+        {store && (
+          <span
+            className={`status ${store.isActive ? "status-active" : "status-inactive"}`}
+          >
+            {store.isActive ? "Ativa" : "Inativa"}
+          </span>
+        )}
+      </div>}
     </div>
   );
 }
@@ -830,6 +836,7 @@ function OverviewPage({ token }: { token: string }) {
         eyebrow="Analytics"
         title="Visão geral"
         description="Acompanhe o que acontece depois que alguém encontra sua página."
+        action={store.data && <StoreQrCodeButton storeName={store.data.name} publicCode={store.data.publicCode} />}
       />
       <div className="filter-bar">
         <div>
