@@ -12,8 +12,6 @@ public sealed class S3ObjectStorage(IConfiguration configuration) : IObjectStora
     private readonly IAmazonS3 client = CreateClient(configuration);
 
     public async Task PutAsync(string key, Stream content, string contentType, CancellationToken cancellationToken) =>
-        // R2 doesn't support the chunked/streaming SigV4 payload signing the SDK uses by default,
-        // which surfaces as an opaque "Authorization" error on PutObject.
         await client.PutObjectAsync(new PutObjectRequest { BucketName = bucket, Key = key, InputStream = content, ContentType = contentType, DisablePayloadSigning = true, UseChunkEncoding = false }, cancellationToken);
 
     public async Task<StoredObject?> OpenReadAsync(string key, CancellationToken cancellationToken)
@@ -31,8 +29,6 @@ public sealed class S3ObjectStorage(IConfiguration configuration) : IObjectStora
 
     private static IAmazonS3 CreateClient(IConfiguration configuration)
     {
-        // AWS SDK v4 defaults to attaching an automatic CRC32 request checksum, which R2 doesn't
-        // handle correctly and which also surfaces as an opaque "Authorization" error.
         var config = new AmazonS3Config
         {
             ServiceURL = configuration["Media:S3:Endpoint"],
