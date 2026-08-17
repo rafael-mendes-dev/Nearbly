@@ -1,3 +1,4 @@
+using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Nearbly.Application.Common;
@@ -30,7 +31,16 @@ public sealed class S3ObjectStorage(IConfiguration configuration) : IObjectStora
 
     private static IAmazonS3 CreateClient(IConfiguration configuration)
     {
-        var config = new AmazonS3Config { ServiceURL = configuration["Media:S3:Endpoint"], ForcePathStyle = true, AuthenticationRegion = "auto" };
+        // AWS SDK v4 defaults to attaching an automatic CRC32 request checksum, which R2 doesn't
+        // handle correctly and which also surfaces as an opaque "Authorization" error.
+        var config = new AmazonS3Config
+        {
+            ServiceURL = configuration["Media:S3:Endpoint"],
+            ForcePathStyle = true,
+            AuthenticationRegion = "auto",
+            RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
+            ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED
+        };
         return new AmazonS3Client(configuration["Media:S3:AccessKey"], configuration["Media:S3:SecretKey"], config);
     }
 }
