@@ -7,8 +7,9 @@ public sealed class NearblyDbContextFactory : IDesignTimeDbContextFactory<Nearbl
 {
     public NearblyDbContext CreateDbContext(string[] args)
     {
-        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Default")
-            ?? "Host=localhost;Port=5432;Database=nearbly;Username=nearbly;Password=nearbly";
+        var connectionString = NpgsqlConnectionStringNormalizer.Normalize(
+            Environment.GetEnvironmentVariable("ConnectionStrings__Default")
+            ?? "Host=localhost;Port=5432;Database=nearbly;Username=nearbly;Password=nearbly");
         var options = new DbContextOptionsBuilder<NearblyDbContext>()
             .UseNpgsql(connectionString, npgsql =>
             {

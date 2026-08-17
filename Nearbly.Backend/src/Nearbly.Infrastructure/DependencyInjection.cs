@@ -29,6 +29,7 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("Default");
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new InvalidOperationException("ConnectionStrings:Default must be configured.");
+        connectionString = NpgsqlConnectionStringNormalizer.Normalize(connectionString);
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<BootstrapAdminOptions>(configuration.GetSection(BootstrapAdminOptions.SectionName));
         services.AddDbContext<NearblyDbContext>(options => options
