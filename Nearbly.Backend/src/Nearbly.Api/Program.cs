@@ -1,8 +1,11 @@
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Nearbly.Api.Endpoints;
 using Nearbly.Api.Infrastructure;
 using Nearbly.Infrastructure;
+using Nearbly.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +35,26 @@ builder.Services.AddAuthorization();
 builder.Services.AddOutputCache(options => options.AddPolicy("media", policy => policy.Expire(TimeSpan.FromDays(30)).Tag("media")));
 
 var app = builder.Build();
+
+// Invoked as the Railway pre-deploy command (`dotnet Nearbly.Api.dll migrate`) so schema changes
+// land before the new revision takes traffic; the runtime image has no `dotnet-ef` CLI, only the
+// EF Core provider already referenced by NearblyDbContext, so this calls MigrateAsync directly.
+if (args.Contains("migrate", StringComparer.OrdinalIgnoreCase))
+{
+    await using var migrationScope = app.Services.CreateAsyncScope();
+    await migrationScope.ServiceProvider.GetRequiredService<NearblyDbContext>().Database.MigrateAsync();
+    return;
+}
+
+// The platform's edge proxy (Railway, Cloud Run, etc.) terminates TLS and forwards plain HTTP
+// with X-Forwarded-* headers; without this, UseHttpsRedirection below sees the request as HTTP
+// and redirect-loops forever.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    KnownIPNetworks = { },
+    KnownProxies = { }
+});
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<StatusCodeProblemDetailsMiddleware>();
 if (!app.Environment.IsDevelopment())

@@ -86,11 +86,11 @@ public static class DependencyInjection
         return services;
     }
 
+    // Schema migrations run via the Railway pre-deploy command (`dotnet Nearbly.Api.dll migrate`,
+    // see Program.cs) before a new revision takes traffic, not on every app startup.
     public static async Task InitializeNearblyDatabaseAsync(this WebApplication app)
     {
         await using var scope = app.Services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<NearblyDbContext>();
-        await db.Database.MigrateAsync();
         await scope.ServiceProvider.GetRequiredService<IdentityBootstrapper>().RunAsync();
     }
 }
