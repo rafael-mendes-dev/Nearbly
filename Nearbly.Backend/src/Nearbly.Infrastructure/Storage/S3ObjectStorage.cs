@@ -11,7 +11,9 @@ public sealed class S3ObjectStorage(IConfiguration configuration) : IObjectStora
     private readonly IAmazonS3 client = CreateClient(configuration);
 
     public async Task PutAsync(string key, Stream content, string contentType, CancellationToken cancellationToken) =>
-        await client.PutObjectAsync(new PutObjectRequest { BucketName = bucket, Key = key, InputStream = content, ContentType = contentType }, cancellationToken);
+        // R2 doesn't support the chunked/streaming SigV4 payload signing the SDK uses by default,
+        // which surfaces as an opaque "Authorization" error on PutObject.
+        await client.PutObjectAsync(new PutObjectRequest { BucketName = bucket, Key = key, InputStream = content, ContentType = contentType, DisablePayloadSigning = true, UseChunkEncoding = false }, cancellationToken);
 
     public async Task<StoredObject?> OpenReadAsync(string key, CancellationToken cancellationToken)
     {
@@ -28,7 +30,7 @@ public sealed class S3ObjectStorage(IConfiguration configuration) : IObjectStora
 
     private static IAmazonS3 CreateClient(IConfiguration configuration)
     {
-        var config = new AmazonS3Config { ServiceURL = configuration["Media:S3:Endpoint"], ForcePathStyle = true };
+        var config = new AmazonS3Config { ServiceURL = configuration["Media:S3:Endpoint"], ForcePathStyle = true, AuthenticationRegion = "auto" };
         return new AmazonS3Client(configuration["Media:S3:AccessKey"], configuration["Media:S3:SecretKey"], config);
     }
 }
