@@ -41,10 +41,16 @@ public sealed class TabService(INearblyDbContext db, IValidator<CreateTabRequest
         return TabResponse.From(tab);
     }
 
-    public async Task DeactivateAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken)
+    public async Task DeleteAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken)
     {
         var tab = await GetEntityAsync(storeId, tabId, cancellationToken);
-        tab.Deactivate();
+        var links = db.Links.Where(link => link.StoreTabId == tabId);
+        await db.LinkClicks.Where(click => links.Select(link => link.Id).Contains(click.LinkId)).ExecuteDeleteAsync(cancellationToken);
+        await links.ExecuteDeleteAsync(cancellationToken);
+        await db.Products.Where(product => product.StoreTabId == tabId).ExecuteDeleteAsync(cancellationToken);
+        await db.MarkdownBlocks.Where(block => block.StoreTabId == tabId).ExecuteDeleteAsync(cancellationToken);
+        await db.GalleryItems.Where(item => item.StoreTabId == tabId).ExecuteDeleteAsync(cancellationToken);
+        db.StoreTabs.Remove(tab);
         await SaveAsync(cancellationToken);
     }
 

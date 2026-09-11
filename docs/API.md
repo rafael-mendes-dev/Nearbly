@@ -55,7 +55,7 @@ Fora de Development, habilite com Swagger__Enabled=true. O esquema Bearer aparec
 |---|---|
 | 200 | Leitura ou atualização com corpo. |
 | 201 | Criação administrativa. O header Location aponta para o recurso. |
-| 204 | Desativação lógica ou registro de visualização, sem corpo. |
+| 204 | Exclusão administrativa ou registro de visualização, sem corpo. |
 | 302 | Redirect rastreado para URL externa. |
 | 400 | JSON, parâmetro ou payload inválido. |
 | 401 | Token ausente/inválido ou credenciais inválidas. |
@@ -91,11 +91,11 @@ Toda falha deve ser tratada pelo frontend como application/problem+json:
 
 Falhas de validação podem combinar várias mensagens em detail. O contrato atual não retorna um mapa errors por campo; use detail como fallback.
 
-### Ordenação e desativação
+### Ordenação e exclusão
 
 Listas administrativas e públicas usam sortOrder crescente e, em empate, id crescente. Não há paginação no MVP.
 
-DELETE não remove dados. Ele define isActive como false e preserva eventos. Listagens administrativas retornam ativos e inativos. Para reativar, use PUT com isActive: true.
+DELETE remove o recurso definitivamente. Ao excluir uma aba ou loja, seus conteúdos e cliques associados também são removidos. Listagens administrativas não retornam recursos excluídos.
 
 ## 3. DTOs
 
@@ -385,7 +385,7 @@ Atualiza a loja usando UpdateStoreRequest. Retorna 200 StoreResponse. Respostas:
 
 #### DELETE /api/admin/stores/{storeId}
 
-Desativa logicamente, sem remover filhos ou eventos. Retorna 204 sem corpo. Respostas: 204, 401, 403 e 404.
+Exclui a loja, seu conteúdo e seus eventos definitivamente. Retorna 204 sem corpo. Respostas: 204, 401, 403 e 404.
 
 ### Abas
 
@@ -407,7 +407,7 @@ Atualiza usando UpdateTabRequest e permite reativar com isActive: true. Retorna 
 
 #### DELETE /api/admin/stores/{storeId}/tabs/{tabId}
 
-Desativa logicamente. Links da aba ficam persistidos, mas ocultos enquanto a aba estiver inativa. Retorna 204. Respostas: 204, 401, 403 e 404.
+Exclui a aba e todo o seu conteúdo definitivamente. Retorna 204. Respostas: 204, 401, 403 e 404.
 
 ### Links
 
@@ -434,7 +434,7 @@ Atualiza usando UpdateLinkRequest, incluindo aba e isActive. Retorna 200 LinkRes
 
 #### DELETE /api/admin/stores/{storeId}/links/{linkId}
 
-Desativa logicamente e preserva eventos. Retorna 204. Respostas: 204, 401, 403 e 404.
+Exclui o link e seus cliques definitivamente. Retorna 204. Respostas: 204, 401, 403 e 404.
 
 ### Analytics
 
@@ -530,7 +530,7 @@ Regras:
 3. Envie Authorization Bearer nas requests administrativas.
 4. Liste lojas.
 5. Crie/atualize abas e links com o storeId retornado.
-6. Use isActive para reativar registros.
+6. Use PUT para editar registros; DELETE é permanente.
 7. Consulte analytics com filtros yyyy-MM-dd.
 8. Em 401, descarte o token e volte ao login; em 409, mostre detail para correção; em 400, mostre a validação.
 
@@ -723,13 +723,13 @@ Resposta `201 MediaResponse`:
 }
 ~~~
 
-`GET /media/{mediaId}` é anônimo, não expõe a chave privada do storage e retorna cache público. `DELETE /api/admin/stores/{storeId}/media/{mediaId}` só desativa mídia sem referência. Mídias usadas por logo, produto ou galeria retornam `409`.
+`GET /media/{mediaId}` é anônimo, não expõe a chave privada do storage e retorna cache público. `DELETE /api/admin/stores/{storeId}/media/{mediaId}` remove mídia sem referência, inclusive do storage. Mídias usadas por logo, produto ou galeria retornam `409`.
 
 Para usar a mídia como logo, envie `logoMediaId` em `PUT /api/admin/stores/{storeId}`. `logoUrl` continua aceitando URLs externas para compatibilidade; a mídia interna tem prioridade.
 
 ### CRUD de conteúdo
 
-Todos os endpoints abaixo exigem JWT, usam desativação lógica e retornam ativos e inativos nas listagens administrativas:
+Todos os endpoints abaixo exigem JWT; DELETE remove o item definitivamente:
 
 | Método | Rota | Corpo de criação |
 |---|---|---|

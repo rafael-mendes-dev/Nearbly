@@ -15,5 +15,5 @@ public interface ITabService
     Task<TabResponse> GetAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken);
     Task<TabResponse> CreateAsync(Guid storeId, CreateTabRequest request, CancellationToken cancellationToken);
     Task<TabResponse> UpdateAsync(Guid storeId, Guid tabId, UpdateTabRequest request, CancellationToken cancellationToken);
-    Task DeactivateAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken);
 }

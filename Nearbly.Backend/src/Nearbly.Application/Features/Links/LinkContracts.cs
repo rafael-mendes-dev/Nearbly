@@ -15,5 +15,5 @@ public interface ILinkService
     Task<LinkResponse> GetAsync(Guid storeId, Guid linkId, CancellationToken cancellationToken);
     Task<LinkResponse> CreateAsync(Guid storeId, CreateLinkRequest request, CancellationToken cancellationToken);
     Task<LinkResponse> UpdateAsync(Guid storeId, Guid linkId, UpdateLinkRequest request, CancellationToken cancellationToken);
-    Task DeactivateAsync(Guid storeId, Guid linkId, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid storeId, Guid linkId, CancellationToken cancellationToken);
 }

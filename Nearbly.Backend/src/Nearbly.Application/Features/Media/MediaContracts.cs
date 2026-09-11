@@ -11,6 +11,6 @@ public sealed record MediaResponse(Guid Id, string Url, string MimeType, long Si
 public interface IMediaService
 {
     Task<MediaResponse> UploadAsync(Guid storeId, MediaUpload upload, CancellationToken cancellationToken);
-    Task DeactivateAsync(Guid storeId, Guid mediaId, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid storeId, Guid mediaId, CancellationToken cancellationToken);
     Task<StoredObject?> OpenReadAsync(Guid mediaId, CancellationToken cancellationToken);
 }

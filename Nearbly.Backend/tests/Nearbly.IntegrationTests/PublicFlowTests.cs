@@ -209,26 +209,30 @@ public sealed class PublicFlowTests(NearblyApiFixture fixture) : IClassFixture<N
         Assert.Equal(HttpStatusCode.BadRequest, invalidPeriod.StatusCode);
         Assert.Equal("application/problem+json", invalidPeriod.Content.Headers.ContentType?.MediaType);
 
-        var deactivateTab = await client.DeleteAsync($"/api/admin/stores/{storeId}/tabs/{tabId}");
-        Assert.Equal(HttpStatusCode.NoContent, deactivateTab.StatusCode);
+        const string mapsUrl = "https://www.google.com/maps/dir//JV+UNIFORMES+ESCOLARES+-+R.+Hip%C3%B3lito+Cesar+Sobrinho,+110+-+Uberaba,+Curitiba+-+PR,+81590-337/@-25.4860123,-49.2092385,17z/data=!4m17!1m7!3m6!1s0x94dcfb994229381f:0x9aef791e0ec8d63e!2sJV+UNIFORMES+ESCOLARES!8m2!3d-25.4860172!4d-49.2066636!16s%2Fg%2F11h022cqmt!4m8!1m0!1m5!1m1!1s0x94dcfb994229381f:0x9aef791e0ec8d63e!2m2!1d-49.2066638!2d-25.4860181!3e0?entry=ttu&g_ep=EgoyMDI2MDkwOC4wIKXMDSoASAFQAw%3D%3D";
+        var updateLink = await client.PutAsJsonAsync($"/api/admin/stores/{storeId}/links/{linkId}", new { type = "location", label = "Como chegar", url = mapsUrl, sortOrder = 0, storeTabId = tabId, isActive = true });
+        Assert.Equal(HttpStatusCode.OK, updateLink.StatusCode);
+        client.DefaultRequestHeaders.Authorization = null;
+        var mapsRedirect = await client.GetAsync($"/r/{linkId}?src=direct");
+        Assert.Equal(HttpStatusCode.Redirect, mapsRedirect.StatusCode);
+        Assert.Equal(mapsUrl, mapsRedirect.Headers.Location?.ToString());
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+        var deleteTab = await client.DeleteAsync($"/api/admin/stores/{storeId}/tabs/{tabId}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteTab.StatusCode);
         client.DefaultRequestHeaders.Authorization = null;
         var publicWithoutTab = await client.GetFromJsonAsync<PublicStoreResponse>($"/api/public/stores/{publicCode}");
         Assert.DoesNotContain(publicWithoutTab!.Tabs, tab => tab.Id == tabId);
-        var redirectFromInactiveTab = await client.GetAsync($"/r/{linkId}?src=direct");
-        Assert.Equal(HttpStatusCode.Redirect, redirectFromInactiveTab.StatusCode);
+        var redirectFromDeletedTab = await client.GetAsync($"/r/{linkId}?src=direct");
+        Assert.Equal(HttpStatusCode.NotFound, redirectFromDeletedTab.StatusCode);
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-        var inactiveTabs = await client.GetFromJsonAsync<List<JsonElement>>($"/api/admin/stores/{storeId}/tabs");
-        Assert.Contains(inactiveTabs!, tab => !tab.GetProperty("isActive").GetBoolean());
-        var reactivateTab = await client.PutAsJsonAsync($"/api/admin/stores/{storeId}/tabs/{tabId}", new { key = "menu", name = "Menu", sortOrder = 0, isActive = true });
-        Assert.Equal(HttpStatusCode.OK, reactivateTab.StatusCode);
-        client.DefaultRequestHeaders.Authorization = null;
-        var publicAfterReactivation = await client.GetFromJsonAsync<PublicStoreResponse>($"/api/public/stores/{publicCode}");
-        Assert.Contains(publicAfterReactivation!.Tabs, tab => tab.Id == tabId);
+        var remainingTabs = await client.GetFromJsonAsync<List<JsonElement>>($"/api/admin/stores/{storeId}/tabs");
+        Assert.DoesNotContain(remainingTabs!, tab => tab.GetProperty("id").GetGuid() == tabId);
 
         using var scope = fixture.Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<NearblyDbContext>();
         Assert.Equal(2, db.PageViews.Count());
-        Assert.Equal(4, db.LinkClicks.Count());
+        Assert.Single(db.LinkClicks);
     }
 }

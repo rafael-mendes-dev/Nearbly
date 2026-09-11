@@ -27,6 +27,9 @@ public sealed class S3ObjectStorage(IConfiguration configuration) : IObjectStora
         }
     }
 
+    public async Task DeleteAsync(string key, CancellationToken cancellationToken) =>
+        await client.DeleteObjectAsync(bucket, key, cancellationToken);
+
     private static IAmazonS3 CreateClient(IConfiguration configuration)
     {
         var config = new AmazonS3Config

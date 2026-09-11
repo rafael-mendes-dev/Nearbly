@@ -25,40 +25,40 @@ const activeLink: AdminLinkResponse = {
 describe('ContentPage', () => {
   afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
-  it('updates a link to inactive after deactivation', async () => {
-    let isActive = true
+  it('removes a deleted link from the workspace', async () => {
+    let links = [activeLink]
     vi.spyOn(api, 'store').mockResolvedValue(store)
     vi.spyOn(api, 'tabs').mockResolvedValue([tab])
-    vi.spyOn(api, 'links').mockImplementation(async () => [{ ...activeLink, isActive }])
-    vi.spyOn(api, 'deactivateLink').mockImplementation(async () => { isActive = false })
+    vi.stubGlobal('confirm', vi.fn(() => true))
+    vi.spyOn(api, 'links').mockImplementation(async () => links)
+    const deleteLink = vi.spyOn(api, 'deleteLink').mockImplementation(async () => { links = [] })
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
     const user = userEvent.setup()
     render(<QueryClientProvider client={queryClient}><MemoryRouter initialEntries={[`/lojas/${store.id}/conteudo`]}><Routes><Route path="/lojas/:storeId/conteudo" element={<ContentPage token="token" />} /></Routes></MemoryRouter></QueryClientProvider>)
 
-    const deactivateButton = await screen.findByRole('button', { name: 'Desativar Instagram' })
-    await user.click(deactivateButton)
+    await user.click(await screen.findByRole('button', { name: 'Excluir Instagram' }))
 
-    expect(await screen.findByText('Inativo')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Desativar Instagram' })).not.toBeInTheDocument()
+    expect(deleteLink).toHaveBeenCalledWith(store.id, activeLink.id, 'token')
+    expect(screen.queryByRole('button', { name: 'Excluir Instagram' })).not.toBeInTheDocument()
   })
 
-  it('removes a deactivated tab from the active content workspace', async () => {
-    let isActive = true
+  it('removes a deleted tab from the content workspace', async () => {
+    let tabs = [tab]
     vi.stubGlobal('confirm', vi.fn(() => true))
     vi.spyOn(api, 'store').mockResolvedValue(store)
-    vi.spyOn(api, 'tabs').mockImplementation(async () => [{ ...tab, isActive }])
+    vi.spyOn(api, 'tabs').mockImplementation(async () => tabs)
     vi.spyOn(api, 'links').mockResolvedValue([])
-    vi.spyOn(api, 'deactivateTab').mockImplementation(async () => { isActive = false })
+    vi.spyOn(api, 'deleteTab').mockImplementation(async () => { tabs = [] })
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
     const user = userEvent.setup()
     render(<QueryClientProvider client={queryClient}><MemoryRouter initialEntries={[`/lojas/${store.id}/conteudo`]}><Routes><Route path="/lojas/:storeId/conteudo" element={<ContentPage token="token" />} /></Routes></MemoryRouter></QueryClientProvider>)
 
-    await user.click(await screen.findByRole('button', { name: 'Desativar Links' }))
+    await user.click(await screen.findByRole('button', { name: 'Excluir Links' }))
 
-    expect(await screen.findByText('Nenhuma aba ativa.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Desativar Links' })).not.toBeInTheDocument()
+    expect(await screen.findByText('Crie a primeira aba para começar.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Excluir Links' })).not.toBeInTheDocument()
   })
 
   it('submits an icon selected from the preset menu', async () => {
@@ -77,5 +77,23 @@ describe('ContentPage', () => {
     await user.click(screen.getByRole('button', { name: 'Adicionar link' }))
 
     expect(createLink).toHaveBeenCalledWith(store.id, expect.objectContaining({ icon: 'maps' }), 'token')
+  })
+
+  it('edits a link inside its tab', async () => {
+    vi.spyOn(api, 'store').mockResolvedValue(store)
+    vi.spyOn(api, 'tabs').mockResolvedValue([tab])
+    vi.spyOn(api, 'links').mockResolvedValue([activeLink])
+    const updateLink = vi.spyOn(api, 'updateLink').mockResolvedValue(activeLink)
+
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    const user = userEvent.setup()
+    render(<QueryClientProvider client={queryClient}><MemoryRouter initialEntries={[`/lojas/${store.id}/conteudo`]}><Routes><Route path="/lojas/:storeId/conteudo" element={<ContentPage token="token" />} /></Routes></MemoryRouter></QueryClientProvider>)
+
+    await user.click(await screen.findByRole('button', { name: 'Editar Instagram' }))
+    await user.clear(screen.getByLabelText('Destino'))
+    await user.type(screen.getByLabelText('Destino'), 'https://instagram.com/novo')
+    await user.click(screen.getByRole('button', { name: 'Salvar link' }))
+
+    expect(updateLink).toHaveBeenCalledWith(store.id, activeLink.id, expect.objectContaining({ url: 'https://instagram.com/novo', storeTabId: tab.id }), 'token')
   })
 })

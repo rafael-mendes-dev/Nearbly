@@ -45,8 +45,8 @@ public sealed class ContentService(INearblyDbContext db, TimeProvider timeProvid
         return ToProductResponse(product);
     }
 
-    public Task DeactivateProductAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken) =>
-        DeactivateAsync(db.Products, storeId, tabId, id, "Product not found.", cancellationToken);
+    public Task DeleteProductAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken) =>
+        DeleteAsync(db.Products, storeId, tabId, id, "Product not found.", cancellationToken);
 
     public async Task<IReadOnlyList<MarkdownBlockResponse>> ListMarkdownBlocksAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken)
     {
@@ -84,8 +84,8 @@ public sealed class ContentService(INearblyDbContext db, TimeProvider timeProvid
         return new MarkdownBlockResponse(block.Id, block.StoreId, block.StoreTabId, block.Title, block.Markdown, block.SortOrder, block.IsActive, block.CreatedAtUtc, block.UpdatedAtUtc);
     }
 
-    public Task DeactivateMarkdownBlockAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken) =>
-        DeactivateAsync(db.MarkdownBlocks, storeId, tabId, id, "Markdown block not found.", cancellationToken);
+    public Task DeleteMarkdownBlockAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken) =>
+        DeleteAsync(db.MarkdownBlocks, storeId, tabId, id, "Markdown block not found.", cancellationToken);
 
     public async Task<IReadOnlyList<GalleryItemResponse>> ListGalleryItemsAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken)
     {
@@ -125,8 +125,8 @@ public sealed class ContentService(INearblyDbContext db, TimeProvider timeProvid
         return ToGalleryResponse(item);
     }
 
-    public Task DeactivateGalleryItemAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken) =>
-        DeactivateAsync(db.GalleryItems, storeId, tabId, id, "Gallery item not found.", cancellationToken);
+    public Task DeleteGalleryItemAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken) =>
+        DeleteAsync(db.GalleryItems, storeId, tabId, id, "Gallery item not found.", cancellationToken);
 
     private async Task EnsureTabAsync(Guid storeId, Guid tabId, ContentType type, CancellationToken cancellationToken)
     {
@@ -141,18 +141,18 @@ public sealed class ContentService(INearblyDbContext db, TimeProvider timeProvid
             throw new ConflictException("The selected media does not belong to this store.");
     }
 
-    private async Task DeactivateAsync<TEntity>(DbSet<TEntity> set, Guid storeId, Guid tabId, Guid id, string message, CancellationToken cancellationToken) where TEntity : class
+    private async Task DeleteAsync<TEntity>(DbSet<TEntity> set, Guid storeId, Guid tabId, Guid id, string message, CancellationToken cancellationToken) where TEntity : class
     {
         var entity = await set.FindAsync([id], cancellationToken) ?? throw new NotFoundException(message);
         var storeProperty = entity switch
         {
-            Product product => (product.StoreId, product.StoreTabId, (Action)(() => product.Deactivate(timeProvider.GetUtcNow()))),
-            MarkdownBlock block => (block.StoreId, block.StoreTabId, (Action)(() => block.Deactivate(timeProvider.GetUtcNow()))),
-            GalleryItem item => (item.StoreId, item.StoreTabId, (Action)(() => item.Deactivate(timeProvider.GetUtcNow()))),
+            Product product => (product.StoreId, product.StoreTabId),
+            MarkdownBlock block => (block.StoreId, block.StoreTabId),
+            GalleryItem item => (item.StoreId, item.StoreTabId),
             _ => throw new InvalidOperationException("Unsupported content entity.")
         };
         if (storeProperty.StoreId != storeId || storeProperty.StoreTabId != tabId) throw new NotFoundException(message);
-        storeProperty.Item3();
+        set.Remove(entity);
         await db.SaveChangesAsync(cancellationToken);
     }
 

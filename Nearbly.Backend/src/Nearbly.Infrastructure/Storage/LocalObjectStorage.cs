@@ -25,6 +25,12 @@ public sealed class LocalObjectStorage(IConfiguration configuration) : IObjectSt
         return Task.FromResult<StoredObject?>(new StoredObject(stream, "image/webp", stream.Length));
     }
 
+    public Task DeleteAsync(string key, CancellationToken cancellationToken)
+    {
+        File.Delete(GetPath(key));
+        return Task.CompletedTask;
+    }
+
     private string GetPath(string key)
     {
         var normalized = key.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
