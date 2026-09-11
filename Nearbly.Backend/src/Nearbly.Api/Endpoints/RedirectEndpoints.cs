@@ -9,7 +9,7 @@ public static class RedirectEndpoints
         endpoints.MapGet("/r/{linkId:guid}", async (Guid linkId, string? src, IPublicService service, CancellationToken ct) =>
         {
             var target = await service.RegisterClickAsync(linkId, TrafficSourceParser.Parse(src), ct);
-            return Results.Redirect(target.ToString(), permanent: false, preserveMethod: false);
+            return Results.Redirect(target.GetComponents(UriComponents.AbsoluteUri, UriFormat.UriEscaped), permanent: false, preserveMethod: false);
         }).AllowAnonymous().WithTags("Redirects").WithSummary("Redirect to a tracked link").Produces(StatusCodes.Status302Found).ProducesProblem(StatusCodes.Status404NotFound).ProducesProblem(StatusCodes.Status409Conflict);
         return endpoints;
     }
