@@ -44,5 +44,5 @@ public interface IStoreService
     Task<StoreResponse> GetAsync(Guid storeId, CancellationToken cancellationToken);
     Task<StoreResponse> CreateAsync(CreateStoreRequest request, CancellationToken cancellationToken);
     Task<StoreResponse> UpdateAsync(Guid storeId, UpdateStoreRequest request, CancellationToken cancellationToken);
-    Task DeactivateAsync(Guid storeId, CancellationToken cancellationToken);
+    Task DeleteAsync(Guid storeId, CancellationToken cancellationToken);
 }

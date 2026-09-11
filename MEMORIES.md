@@ -2,6 +2,8 @@
 
 ## Decisões atuais
 
+- **2026-09-10 | Exclusão administrativa |** `DELETE` remove definitivamente a loja, aba, link, conteúdo ou mídia solicitada; remover uma aba ou loja remove também os filhos e analytics associados. **Motivo:** o painel precisa permitir limpeza efetiva dos itens criados. **Impacto:** exclusões não podem ser desfeitas e o painel exige confirmação.
+
 - **2026-08-12 | Identidade do frontend |** As superfícies Nearbly usam tema escuro com preto `#06080F`, índigo `#2B22E0`, ciano e menta como acentos; os componentes animados vêm do registry React Bits e são adaptados aos tokens e a `prefers-reduced-motion`. **Motivo:** alinhar o produto ao design system oficial e manter uma linguagem visual coerente entre marketing e painel. **Impacto:** páginas públicas partem da mesma base escura, mas preservam as cores configuradas pela loja como personalização.
 - **2026-08-12 | Frontend |** O frontend migrou de Vite SPA para Astro em modo server com React islands; páginas institucionais são prerenderizadas, páginas públicas resolvem a loja via SSR e o painel administrativo é uma ilha client-only por depender de `BrowserRouter`. **Motivo:** preservar SEO e primeira resposta da página pública sem misturar APIs de navegador no SSR do painel. **Impacto:** o deploy precisa de runtime Node e proxy reverso para `/api/**` e `/r/**`; o frontend usa `API_BASE_URL` no servidor e `PUBLIC_API_BASE_URL` no navegador.
 - **2026-08-12 | Runtime |** O frontend usa Astro 7 com `@astrojs/node` 11 e requer Node.js `>=22.12.0`. **Motivo:** Astro 7 não suporta Node 20. **Impacto:** ambientes locais e de deploy precisam disponibilizar Node 22 ou superior.

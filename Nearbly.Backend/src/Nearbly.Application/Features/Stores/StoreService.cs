@@ -5,7 +5,7 @@ using Nearbly.Domain.Entities;
 
 namespace Nearbly.Application.Features.Stores;
 
-public sealed class StoreService(INearblyDbContext db, IValidator<CreateStoreRequest> createValidator, IValidator<UpdateStoreRequest> updateValidator, TimeProvider timeProvider) : IStoreService
+public sealed class StoreService(INearblyDbContext db, IValidator<CreateStoreRequest> createValidator, IValidator<UpdateStoreRequest> updateValidator, IObjectStorage storage, TimeProvider timeProvider) : IStoreService
 {
     public async Task<IReadOnlyList<StoreResponse>> ListAsync(CancellationToken cancellationToken) =>
         await db.Stores.AsNoTracking().OrderBy(x => x.Name).ThenBy(x => x.Id).Select(x => new StoreResponse(x.Id, x.Name, x.Slug, x.PublicCode, x.Description, x.LogoMediaId.HasValue ? "/media/" + x.LogoMediaId : x.LogoUrl, x.PrimaryColor, x.SecondaryColor, x.LogoMediaId, x.IsActive, x.CreatedAtUtc, x.UpdatedAtUtc)).ToListAsync(cancellationToken);
@@ -45,11 +45,23 @@ public sealed class StoreService(INearblyDbContext db, IValidator<CreateStoreReq
         return StoreResponse.From(store);
     }
 
-    public async Task DeactivateAsync(Guid storeId, CancellationToken cancellationToken)
+    public async Task DeleteAsync(Guid storeId, CancellationToken cancellationToken)
     {
         var store = await GetEntityAsync(storeId, cancellationToken);
-        store.Deactivate();
-        await SaveAsync("The store could not be updated.", cancellationToken);
+        store.SetLogoMedia(null, timeProvider.GetUtcNow());
+        await SaveAsync("The store could not be deleted.", cancellationToken);
+        var mediaKeys = await db.MediaAssets.Where(media => media.StoreId == storeId).Select(media => media.StorageKey).ToListAsync(cancellationToken);
+        await db.LinkClicks.Where(click => click.StoreId == storeId).ExecuteDeleteAsync(cancellationToken);
+        await db.PageViews.Where(view => view.StoreId == storeId).ExecuteDeleteAsync(cancellationToken);
+        await db.Links.Where(link => link.StoreId == storeId).ExecuteDeleteAsync(cancellationToken);
+        await db.Products.Where(product => product.StoreId == storeId).ExecuteDeleteAsync(cancellationToken);
+        await db.MarkdownBlocks.Where(block => block.StoreId == storeId).ExecuteDeleteAsync(cancellationToken);
+        await db.GalleryItems.Where(item => item.StoreId == storeId).ExecuteDeleteAsync(cancellationToken);
+        await db.MediaAssets.Where(media => media.StoreId == storeId).ExecuteDeleteAsync(cancellationToken);
+        await db.StoreTabs.Where(tab => tab.StoreId == storeId).ExecuteDeleteAsync(cancellationToken);
+        db.Stores.Remove(store);
+        await SaveAsync("The store could not be deleted.", cancellationToken);
+        foreach (var key in mediaKeys) await storage.DeleteAsync(key, cancellationToken);
     }
 
     private async Task<Store> GetEntityAsync(Guid storeId, CancellationToken cancellationToken) =>

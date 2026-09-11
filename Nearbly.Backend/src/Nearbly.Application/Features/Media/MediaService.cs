@@ -20,16 +20,17 @@ public sealed class MediaService(INearblyDbContext db, IImageProcessor imageProc
         }
     }
 
-    public async Task DeactivateAsync(Guid storeId, Guid mediaId, CancellationToken cancellationToken)
+    public async Task DeleteAsync(Guid storeId, Guid mediaId, CancellationToken cancellationToken)
     {
         var media = await db.MediaAssets.SingleOrDefaultAsync(x => x.StoreId == storeId && x.Id == mediaId, cancellationToken)
             ?? throw new NotFoundException("Media not found.");
         var used = await db.Stores.AnyAsync(x => x.LogoMediaId == mediaId)
             || await db.Products.AnyAsync(x => x.MediaAssetId == mediaId)
             || await db.GalleryItems.AnyAsync(x => x.MediaAssetId == mediaId);
-        if (used) throw new ConflictException("Referenced media cannot be deactivated.");
-        media.Deactivate(timeProvider.GetUtcNow());
+        if (used) throw new ConflictException("Referenced media cannot be deleted.");
+        db.MediaAssets.Remove(media);
         await db.SaveChangesAsync(cancellationToken);
+        await storage.DeleteAsync(media.StorageKey, cancellationToken);
     }
 
     public async Task<StoredObject?> OpenReadAsync(Guid mediaId, CancellationToken cancellationToken)

@@ -13,4 +13,5 @@ public interface IObjectStorage
 {
     Task PutAsync(string key, Stream content, string contentType, CancellationToken cancellationToken);
     Task<StoredObject?> OpenReadAsync(string key, CancellationToken cancellationToken);
+    Task DeleteAsync(string key, CancellationToken cancellationToken);
 }

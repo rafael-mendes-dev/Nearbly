@@ -590,7 +590,7 @@ function StoreListPage({ token }: { token: string }) {
     onSettled: () => void queryClient.invalidateQueries({ queryKey: ["stores"] }),
   });
   const deactivate = useMutation({
-    mutationFn: (id: string) => api.deactivateStore(id, token),
+    mutationFn: (id: string) => api.deleteStore(id, token),
     onSuccess: () =>
       void queryClient.invalidateQueries({ queryKey: ["stores"] }),
   });
@@ -669,10 +669,10 @@ function StoreListPage({ token }: { token: string }) {
                   <button
                     className="button-icon"
                     onClick={() =>
-                      window.confirm(`Desativar ${store.name}?`) &&
+                      window.confirm(`Excluir ${store.name} permanentemente?`) &&
                       deactivate.mutate(store.id)
                     }
-                    aria-label={`Desativar ${store.name}`}
+                    aria-label={`Excluir ${store.name}`}
                   >
                     <Trash2 size={17} />
                   </button>
@@ -1050,7 +1050,7 @@ function LinksPage({ token }: { token: string }) {
     },
   });
   const deactivate = useMutation({
-    mutationFn: (id: string) => api.deactivateLink(storeId, id, token),
+    mutationFn: (id: string) => api.deleteLink(storeId, id, token),
     onSuccess: () =>
       void queryClient.invalidateQueries({ queryKey: ["links", storeId] }),
   });
@@ -1143,7 +1143,7 @@ function LinksPage({ token }: { token: string }) {
                   link={link}
                   onEdit={() => setEditing(link)}
                   onDeactivate={() =>
-                    window.confirm(`Desativar ${link.label}?`) &&
+                    window.confirm(`Excluir ${link.label} permanentemente?`) &&
                     deactivate.mutate(link.id)
                   }
                 />
@@ -1204,7 +1204,7 @@ function SortableLink({
         <button
           className="button-icon"
           onClick={onDeactivate}
-          aria-label={`Desativar ${link.label}`}
+          aria-label={`Excluir ${link.label}`}
         >
           <Trash2 size={16} />
         </button>
@@ -1406,7 +1406,7 @@ function TabsPage({ token }: { token: string }) {
     },
   });
   const deactivate = useMutation({
-    mutationFn: (id: string) => api.deactivateTab(storeId, id, token),
+    mutationFn: (id: string) => api.deleteTab(storeId, id, token),
     onSuccess: () =>
       void queryClient.invalidateQueries({ queryKey: ["tabs", storeId] }),
   });
@@ -1472,10 +1472,10 @@ function TabsPage({ token }: { token: string }) {
                 <button
                   className="button-icon"
                   onClick={() =>
-                    window.confirm(`Desativar ${tab.name}?`) &&
+                    window.confirm(`Excluir ${tab.name} permanentemente?`) &&
                     deactivate.mutate(tab.id)
                   }
-                  aria-label={`Desativar ${tab.name}`}
+                  aria-label={`Excluir ${tab.name}`}
                 >
                   <Trash2 size={16} />
                 </button>

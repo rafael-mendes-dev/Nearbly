@@ -39,10 +39,11 @@ public sealed class LinkService(INearblyDbContext db, IValidator<CreateLinkReque
         return LinkResponse.From(link);
     }
 
-    public async Task DeactivateAsync(Guid storeId, Guid linkId, CancellationToken cancellationToken)
+    public async Task DeleteAsync(Guid storeId, Guid linkId, CancellationToken cancellationToken)
     {
         var link = await GetEntityAsync(storeId, linkId, cancellationToken);
-        link.Deactivate();
+        await db.LinkClicks.Where(click => click.LinkId == linkId).ExecuteDeleteAsync(cancellationToken);
+        db.Links.Remove(link);
         await SaveAsync(cancellationToken);
     }
 

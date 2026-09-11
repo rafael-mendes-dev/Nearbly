@@ -20,17 +20,17 @@ public interface IContentService
     Task<ProductResponse> GetProductAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken);
     Task<ProductResponse> CreateProductAsync(Guid storeId, Guid tabId, CreateProductRequest request, CancellationToken cancellationToken);
     Task<ProductResponse> UpdateProductAsync(Guid storeId, Guid tabId, Guid id, UpdateProductRequest request, CancellationToken cancellationToken);
-    Task DeactivateProductAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken);
+    Task DeleteProductAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<MarkdownBlockResponse>> ListMarkdownBlocksAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken);
     Task<MarkdownBlockResponse> GetMarkdownBlockAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken);
     Task<MarkdownBlockResponse> CreateMarkdownBlockAsync(Guid storeId, Guid tabId, CreateMarkdownBlockRequest request, CancellationToken cancellationToken);
     Task<MarkdownBlockResponse> UpdateMarkdownBlockAsync(Guid storeId, Guid tabId, Guid id, UpdateMarkdownBlockRequest request, CancellationToken cancellationToken);
-    Task DeactivateMarkdownBlockAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken);
+    Task DeleteMarkdownBlockAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken);
 
     Task<IReadOnlyList<GalleryItemResponse>> ListGalleryItemsAsync(Guid storeId, Guid tabId, CancellationToken cancellationToken);
     Task<GalleryItemResponse> GetGalleryItemAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken);
     Task<GalleryItemResponse> CreateGalleryItemAsync(Guid storeId, Guid tabId, CreateGalleryItemRequest request, CancellationToken cancellationToken);
     Task<GalleryItemResponse> UpdateGalleryItemAsync(Guid storeId, Guid tabId, Guid id, UpdateGalleryItemRequest request, CancellationToken cancellationToken);
-    Task DeactivateGalleryItemAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken);
+    Task DeleteGalleryItemAsync(Guid storeId, Guid tabId, Guid id, CancellationToken cancellationToken);
 }
